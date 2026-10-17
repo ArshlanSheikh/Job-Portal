@@ -194,6 +194,9 @@ const runAllTests = async () => {
       "Login candidate succeeds with correct credentials",
       JSON.stringify(loginRes.data)
     );
+    if (loginRes.data?.data?.refreshToken) {
+      candidateRefreshToken = loginRes.data.data.refreshToken;
+    }
 
     // 8. Login with invalid password
     const badLogin = await request("/auth/login", "POST", {

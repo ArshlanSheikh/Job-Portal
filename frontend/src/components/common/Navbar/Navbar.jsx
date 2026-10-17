@@ -12,6 +12,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
+import NotificationDropdown from "./NotificationDropdown";
 import styles from "./Navbar.module.css";
 
 const Navbar = () => {
@@ -107,9 +108,9 @@ const Navbar = () => {
           <ul className={styles.navLinks}>
             <li>
               <Link
-                to="/"
+                to="/jobs"
                 className={`${styles.navLink} ${
-                  location.pathname === "/" ? styles.activeLink : ""
+                  location.pathname === "/jobs" ? styles.activeLink : ""
                 }`}
               >
                 Explore Jobs
@@ -125,6 +126,18 @@ const Navbar = () => {
                 Top Companies
               </Link>
             </li>
+            {(user?.role === "recruiter" || user?.role === "employer") && (
+              <li>
+                <Link
+                  to="/candidates"
+                  className={`${styles.navLink} ${
+                    location.pathname === "/candidates" ? styles.activeLink : ""
+                  }`}
+                >
+                  Find Talent
+                </Link>
+              </li>
+            )}
             <li>
               <Link to="/#how-it-works" className={styles.navLink}>
                 How It Works
@@ -136,65 +149,119 @@ const Navbar = () => {
         {/* Right side: Auth / User Menu */}
         <div className={styles.authActions}>
           {isAuthenticated && user ? (
-            <div className={styles.userMenu} ref={dropdownRef}>
-              <button
-                type="button"
-                className={styles.userBadge}
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                aria-expanded={dropdownOpen}
-              >
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className={styles.userAvatar}
-                  />
-                ) : (
-                  <div className={styles.userAvatar}>
-                    {user.name.charAt(0).toUpperCase()}
+            <>
+              <NotificationDropdown />
+
+              <div className={styles.userMenu} ref={dropdownRef}>
+                <button
+                  type="button"
+                  className={styles.userBadge}
+                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  aria-expanded={dropdownOpen}
+                >
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className={styles.userAvatar}
+                    />
+                  ) : (
+                    <div className={styles.userAvatar}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className={styles.userName}>{user.name}</span>
+                  <span className={`${styles.roleTag} ${getRoleBadgeClass()}`}>
+                    {user.role}
+                  </span>
+                  <ChevronDown size={16} />
+                </button>
+
+                {dropdownOpen && (
+                  <div className={styles.dropdownMenu}>
+                    <Link to={getDashboardPath()} className={styles.dropdownItem}>
+                      <LayoutDashboard size={16} />
+                      <span>Dashboard</span>
+                    </Link>
+                    <Link to={getProfilePath()} className={styles.dropdownItem}>
+                      {user.role === "employer" ? (
+                        <Building size={16} />
+                      ) : user.role === "recruiter" ? (
+                        <UserCheck size={16} />
+                      ) : (
+                        <User size={16} />
+                      )}
+                      <span>
+                        {user.role === "employer"
+                          ? "Company Profile"
+                          : "My Profile"}
+                      </span>
+                    </Link>
+
+                    {/* Stage 2 Candidate Links */}
+                    {user.role === "candidate" && (
+                      <>
+                        <Link to="/applications" className={styles.dropdownItem}>
+                          <Briefcase size={16} />
+                          <span>My Applications</span>
+                        </Link>
+                        <Link to="/saved-jobs" className={styles.dropdownItem}>
+                          <Briefcase size={16} />
+                          <span>Saved Openings</span>
+                        </Link>
+                        <Link to="/invitations" className={styles.dropdownItem}>
+                          <Briefcase size={16} />
+                          <span>Direct Invitations</span>
+                        </Link>
+                      </>
+                    )}
+
+                    {/* Stage 2 Recruiter / Employer Links */}
+                    {(user.role === "recruiter" || user.role === "employer") && (
+                      <>
+                        <Link
+                          to={
+                            user.role === "recruiter"
+                              ? "/dashboard/recruiter/jobs"
+                              : "/dashboard/employer/jobs"
+                          }
+                          className={styles.dropdownItem}
+                        >
+                          <Briefcase size={16} />
+                          <span>Manage Jobs</span>
+                        </Link>
+                        <Link to="/jobs/create" className={styles.dropdownItem}>
+                          <Briefcase size={16} />
+                          <span>Post New Job</span>
+                        </Link>
+                        <Link
+                          to={
+                            user.role === "recruiter"
+                              ? "/dashboard/recruiter/applications"
+                              : "/dashboard/employer/applications"
+                          }
+                          className={styles.dropdownItem}
+                        >
+                          <Briefcase size={16} />
+                          <span>Review Applicants</span>
+                        </Link>
+                      </>
+                    )}
+
+                    <div className={styles.dropdownDivider} />
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className={`${styles.dropdownItem} ${styles.logoutItem}`}
+                    >
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </button>
                   </div>
                 )}
-                <span className={styles.userName}>{user.name}</span>
-                <span className={`${styles.roleTag} ${getRoleBadgeClass()}`}>
-                  {user.role}
-                </span>
-                <ChevronDown size={16} />
-              </button>
-
-              {dropdownOpen && (
-                <div className={styles.dropdownMenu}>
-                  <Link to={getDashboardPath()} className={styles.dropdownItem}>
-                    <LayoutDashboard size={16} />
-                    <span>Dashboard</span>
-                  </Link>
-                  <Link to={getProfilePath()} className={styles.dropdownItem}>
-                    {user.role === "employer" ? (
-                      <Building size={16} />
-                    ) : user.role === "recruiter" ? (
-                      <UserCheck size={16} />
-                    ) : (
-                      <User size={16} />
-                    )}
-                    <span>
-                      {user.role === "employer"
-                        ? "Company Profile"
-                        : "My Profile"}
-                    </span>
-                  </Link>
-
-                  <div className={styles.dropdownDivider} />
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className={`${styles.dropdownItem} ${styles.logoutItem}`}
-                  >
-                    <LogOut size={16} />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            </>
           ) : (
             <>
               <Link to="/login" className={styles.loginBtn}>

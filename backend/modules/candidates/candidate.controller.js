@@ -85,7 +85,13 @@ const UpdateCandidateProfile = async (req, res) => {
     let candidate = await Candidate.findOne({ userId: req.user._id });
 
     if (!candidate) {
-      candidate = new Candidate({ userId: req.user._id });
+      candidate = new Candidate({
+        userId: req.user._id,
+        fullName: req.user.name || "",
+        email: req.user.email || "",
+      });
+    } else if (!candidate.fullName && req.user.name) {
+      candidate.fullName = req.user.name;
     }
 
     // Update allowed fields
@@ -103,6 +109,7 @@ const UpdateCandidateProfile = async (req, res) => {
       "preferredLocations",
       "expectedSalary",
       "profilePhoto",
+      "resume",
     ];
 
     updatableFields.forEach((field) => {
@@ -293,6 +300,126 @@ const DeleteCandidateResume = async (req, res) => {
   }
 };
 
+/**
+ * Search and discover candidates (Recruiters & Employers only)
+ */
+const SearchCandidates = async (req, res) => {
+  try {
+    console.log("Hit SearchCandidates api...");
+    const { search, skills, role, location, page = 1, limit = 12 } = req.query;
+
+    const query = {};
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      query.$or = [
+        { fullName: { $regex: term, $options: "i" } },
+        { headline: { $regex: term, $options: "i" } },
+        { summary: { $regex: term, $options: "i" } },
+        { skills: { $in: [new RegExp(term, "i")] } },
+      ];
+    }
+
+    if (skills && skills.trim()) {
+      const skillList = skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (skillList.length > 0) {
+        query.skills = {
+          $in: skillList.map((s) => new RegExp(`^${s}$`, "i")),
+        };
+      }
+    }
+
+    if (role && role.trim()) {
+      query.$or = [
+        ...(query.$or || []),
+        { headline: { $regex: role.trim(), $options: "i" } },
+        { preferredRoles: { $in: [new RegExp(role.trim(), "i")] } },
+      ];
+    }
+
+    if (location && location.trim()) {
+      query.$or = [
+        ...(query.$or || []),
+        { currentLocation: { $regex: location.trim(), $options: "i" } },
+        { preferredLocations: { $in: [new RegExp(location.trim(), "i")] } },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const total = await Candidate.countDocuments(query);
+    const candidates = await Candidate.find(query)
+      .sort({ completionPercentage: -1, updatedAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .populate("userId", "name email avatar")
+      .select(
+        "userId fullName profilePhoto headline currentLocation skills experience education preferredRoles preferredLocations expectedSalary completionPercentage"
+      );
+
+    return res.status(200).json({
+      success: true,
+      message: "Candidates discovered successfully",
+      data: {
+        candidates,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)) || 1,
+      },
+      error: null,
+    });
+  } catch (error) {
+    console.log("failed to handle SearchCandidates", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search candidates",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Detailed candidate profile view for authorized recruiters and employers
+ */
+const GetCandidateDetailsForRecruiter = async (req, res) => {
+  try {
+    console.log("Hit GetCandidateDetailsForRecruiter api...");
+    const { id } = req.params;
+
+    const candidate = await Candidate.findById(id).populate(
+      "userId",
+      "name email phone avatar"
+    );
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate profile not found",
+        data: null,
+        error: "CANDIDATE_NOT_FOUND",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Candidate profile retrieved for recruiting review",
+      data: candidate,
+      error: null,
+    });
+  } catch (error) {
+    console.log("failed to handle GetCandidateDetailsForRecruiter", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve candidate profile",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
 export {
   GetMyCandidateProfile,
   GetCandidateById,
@@ -300,4 +427,6 @@ export {
   UploadCandidateResume,
   UploadCandidatePhoto,
   DeleteCandidateResume,
+  SearchCandidates,
+  GetCandidateDetailsForRecruiter,
 };

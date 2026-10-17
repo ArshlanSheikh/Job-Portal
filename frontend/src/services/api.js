@@ -101,6 +101,8 @@ export const candidateService = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
   getCandidateById: (id) => api.get(`/candidates/${id}`),
+  searchCandidates: (params) => api.get("/candidates/search", { params }),
+  getCandidateDetails: (id) => api.get(`/candidates/detail/${id}`),
 };
 
 // Recruiter Service
@@ -124,6 +126,60 @@ export const companyService = {
     }),
   getAllCompanies: (params) => api.get("/companies", { params }),
   getCompanyById: (id) => api.get(`/companies/${id}`),
+};
+
+// Job Service
+export const jobService = {
+  getAllJobs: (params) => api.get("/jobs", { params }),
+  getJobById: (id) => api.get(`/jobs/${id}`),
+  getMyCompanyJobs: (params) => api.get("/jobs/company/my", { params }),
+  createJob: (data) => api.post("/jobs", data),
+  updateJob: (id, data) => api.put(`/jobs/${id}`, data),
+  changeJobStatus: (id, status) => api.patch(`/jobs/${id}/status`, { status }),
+  deleteJob: (id) => api.delete(`/jobs/${id}`),
+};
+
+// Saved Jobs Service
+export const savedJobService = {
+  getMySavedJobs: (params) => api.get("/saved-jobs", { params }),
+  saveJob: (jobId) => api.post(`/saved-jobs/${jobId}`),
+  unsaveJob: (jobId) => api.delete(`/saved-jobs/${jobId}`),
+};
+
+// Application Service
+export const applicationService = {
+  applyToJob: (payload) => {
+    if (payload instanceof FormData) {
+      return api.post("/applications", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    }
+    return api.post("/applications", payload);
+  },
+  getMyApplications: (params) => api.get("/applications/me", { params }),
+  withdrawApplication: (id) => api.patch(`/applications/${id}/withdraw`),
+  getJobApplications: (jobId, params) => api.get(`/applications/job/${jobId}`, { params }),
+  getRecruiterAllApplications: (params) => api.get("/applications/recruiter/all", { params }),
+  getApplicationById: (id) => api.get(`/applications/${id}`),
+  updateApplicationStatus: (id, data) => api.patch(`/applications/${id}/status`, data),
+};
+
+// Invitation Service
+export const invitationService = {
+  sendInvitation: (data) => api.post("/invitations", data),
+  getSentInvitations: (params) => api.get("/invitations/sent", { params }),
+  cancelInvitation: (id) => api.patch(`/invitations/${id}/cancel`),
+  getMyInvitations: (params) => api.get("/invitations/me", { params }),
+  respondToInvitation: (id, action) => api.patch(`/invitations/${id}/respond`, { action }),
+};
+
+// Notification Service
+export const notificationService = {
+  getMyNotifications: (params) => api.get("/notifications", { params }),
+  getUnreadCount: () => api.get("/notifications/unread-count"),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch("/notifications/read-all"),
+  deleteNotification: (id) => api.delete(`/notifications/${id}`),
 };
 
 export default api;

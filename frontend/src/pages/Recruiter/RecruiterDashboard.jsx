@@ -7,24 +7,34 @@ import {
   Briefcase,
   Search,
   PlusCircle,
-  ExternalLink,
   ShieldCheck,
 } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
 import { recruiterService } from "../../services/api";
 import styles from "./Recruiter.module.css";
 
 const RecruiterDashboard = () => {
-  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [activeJobsCount, setActiveJobsCount] = useState(0);
+  const [applicationsCount, setApplicationsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecruiterData = async () => {
       try {
-        const res = await recruiterService.getMyProfile();
-        if (res.data && res.data.success) {
-          setProfile(res.data.data);
+        const [profRes, jobsRes, appsRes] = await Promise.allSettled([
+          recruiterService.getMyProfile(),
+          jobService.getMyCompanyJobs({ limit: 1 }),
+          applicationService.getRecruiterAllApplications({ limit: 1 }),
+        ]);
+
+        if (profRes.status === "fulfilled" && profRes.value.data?.success) {
+          setProfile(profRes.value.data.data);
+        }
+        if (jobsRes.status === "fulfilled" && jobsRes.value.data?.success) {
+          setActiveJobsCount(jobsRes.value.data.data?.total || 0);
+        }
+        if (appsRes.status === "fulfilled" && appsRes.value.data?.success) {
+          setApplicationsCount(appsRes.value.data.data?.total || 0);
         }
       } catch (err) {
         console.error("Failed to load recruiter data:", err);
@@ -55,15 +65,21 @@ const RecruiterDashboard = () => {
             Manage your recruiter presence, company affiliation, and candidate pipelines
           </p>
         </div>
-        <Link to="/profile/recruiter" className={styles.saveBtn}>
-          <UserCheck size={16} />
-          <span>Edit Recruiter Profile</span>
-        </Link>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <Link to="/jobs/create" className={styles.saveBtn} style={{ background: "var(--primary-color)", color: "white" }}>
+            <PlusCircle size={16} />
+            <span>Post Opening</span>
+          </Link>
+          <Link to="/profile/recruiter" className={styles.saveBtn}>
+            <UserCheck size={16} />
+            <span>Edit Profile</span>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <Link to="/dashboard/recruiter/jobs" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIcon}
             style={{ backgroundColor: "var(--primary-50)", color: "var(--primary-600)" }}
@@ -71,12 +87,12 @@ const RecruiterDashboard = () => {
             <Briefcase size={22} />
           </div>
           <div>
-            <div className={styles.statValue}>0</div>
+            <div className={styles.statValue}>{activeJobsCount}</div>
             <div className={styles.statLabel}>Active Requisitions</div>
           </div>
-        </div>
+        </Link>
 
-        <div className={styles.statCard}>
+        <Link to="/dashboard/recruiter/applications" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIcon}
             style={{ backgroundColor: "#ecfdf5", color: "#059669" }}
@@ -84,10 +100,10 @@ const RecruiterDashboard = () => {
             <Users size={22} />
           </div>
           <div>
-            <div className={styles.statValue}>0</div>
-            <div className={styles.statLabel}>Sourced Candidates</div>
+            <div className={styles.statValue}>{applicationsCount}</div>
+            <div className={styles.statLabel}>Total Applicants</div>
           </div>
-        </div>
+        </Link>
 
         <div className={styles.statCard}>
           <div
@@ -118,155 +134,80 @@ const RecruiterDashboard = () => {
         </div>
       </div>
 
-      {/* Recruiter & Company Summary Card */}
+      {/* Quick Action Operations */}
       <div className={styles.formCard}>
         <div className={styles.cardHeader}>
           <div>
-            <h2 className={styles.cardTitle}>Recruiter & Agency Affiliation</h2>
+            <h2 className={styles.cardTitle}>Recruitment Operations</h2>
             <p className={styles.cardSubtitle}>
-              Your current public recruiter profile and organization link
+              Quick access to candidate discovery, job requisitions, and application reviews
             </p>
           </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
           <Link
-            to="/profile/recruiter"
-            style={{ fontSize: "0.875rem", color: "var(--primary-600)", fontWeight: 600 }}
-          >
-            Modify Affiliation
-          </Link>
-        </div>
-
-        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-          <div
-            style={{
-              width: "4.5rem",
-              height: "4.5rem",
-              borderRadius: "var(--radius-lg)",
-              backgroundColor: "var(--primary-50)",
-              color: "var(--primary-600)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.75rem",
-              fontWeight: 700,
-              overflow: "hidden",
-            }}
-          >
-            {profile?.profilePhoto ? (
-              <img
-                src={profile.profilePhoto}
-                alt={user?.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              user?.name?.charAt(0).toUpperCase() || "R"
-            )}
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--slate-900)" }}>
-              {profile?.fullName || user?.name}
-            </h3>
-            <p style={{ fontSize: "0.9375rem", color: "var(--slate-600)", marginTop: "0.125rem" }}>
-              {profile?.jobTitle || "Recruiter / Talent Specialist"} •{" "}
-              {profile?.department || "Talent Acquisition"}
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem" }}>
-              <span
-                style={{
-                  fontSize: "0.8125rem",
-                  padding: "0.25rem 0.625rem",
-                  borderRadius: "var(--radius-full)",
-                  backgroundColor: "var(--slate-100)",
-                  color: "var(--slate-700)",
-                  fontWeight: 600,
-                }}
-              >
-                🏢 {profile?.company?.companyName || profile?.companyName || "No Company Selected"}
-              </span>
-              {profile?.linkedinUrl && (
-                <a
-                  href={profile.linkedinUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    fontSize: "0.8125rem",
-                    color: "var(--primary-600)",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.25rem",
-                  }}
-                >
-                  <span>LinkedIn</span>
-                  <ExternalLink size={12} />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stage 2 Candidate Pipeline Preview */}
-      <div className={styles.formCard}>
-        <div className={styles.cardHeader}>
-          <div>
-            <h2 className={styles.cardTitle}>Upcoming Stage 2 Candidate Pipeline</h2>
-            <p className={styles.cardSubtitle}>
-              Candidate search, applicant management, and interview scheduling workflows
-            </p>
-          </div>
-          <span
-            style={{
-              padding: "0.25rem 0.625rem",
-              borderRadius: "var(--radius-full)",
-              backgroundColor: "var(--primary-50)",
-              color: "var(--primary-700)",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-            }}
-          >
-            Stage 2 Roadmap
-          </span>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-          <div
+            to="/jobs/create"
             style={{
               padding: "1.25rem",
               borderRadius: "var(--radius-md)",
               backgroundColor: "var(--slate-50)",
               border: "1px solid var(--border-light)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-              <Search size={18} style={{ color: "var(--primary-600)" }} />
-              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
-                Advanced Candidate Search
-              </h4>
-            </div>
-            <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
-              Filter candidates by indexed skills, verified experience, location preferences, and expected salaries in Stage 2.
-            </p>
-          </div>
-
-          <div
-            style={{
-              padding: "1.25rem",
-              borderRadius: "var(--radius-md)",
-              backgroundColor: "var(--slate-50)",
-              border: "1px solid var(--border-light)",
+              textDecoration: "none",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <PlusCircle size={18} style={{ color: "var(--primary-600)" }} />
               <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
-                Job Requisition Management
+                Post New Job Opening
               </h4>
             </div>
             <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
-              Draft, publish, and track applications on behalf of your affiliated employer or recruitment agency.
+              Draft, customize, and publish positions with tailored skills and salary ranges.
             </p>
-          </div>
+          </Link>
+
+          <Link
+            to="/candidates"
+            style={{
+              padding: "1.25rem",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--slate-50)",
+              border: "1px solid var(--border-light)",
+              textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <Search size={18} style={{ color: "var(--primary-600)" }} />
+              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
+                Candidate Discovery
+              </h4>
+            </div>
+            <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
+              Search verified talent by technical skills, experience, and invite them directly to apply.
+            </p>
+          </Link>
+
+          <Link
+            to="/dashboard/recruiter/applications"
+            style={{
+              padding: "1.25rem",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--slate-50)",
+              border: "1px solid var(--border-light)",
+              textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <Users size={18} style={{ color: "var(--primary-600)" }} />
+              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
+                Screen Applicants
+              </h4>
+            </div>
+            <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
+              Review resumes, cover letters, and advance candidates through recruitment stages.
+            </p>
+          </Link>
         </div>
       </div>
     </div>

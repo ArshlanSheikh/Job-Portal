@@ -12,20 +12,33 @@ import {
   PlusCircle,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { companyService } from "../../services/api";
+import { companyService, jobService, applicationService } from "../../services/api";
 import styles from "./Employer.module.css";
 
 const EmployerDashboard = () => {
   const { user } = useAuth();
   const [company, setCompany] = useState(null);
+  const [activeJobsCount, setActiveJobsCount] = useState(0);
+  const [applicationsCount, setApplicationsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
       try {
-        const res = await companyService.getMyCompany();
-        if (res.data && res.data.success) {
-          setCompany(res.data.data);
+        const [compRes, jobsRes, appsRes] = await Promise.allSettled([
+          companyService.getMyCompany(),
+          jobService.getMyCompanyJobs({ limit: 1 }),
+          applicationService.getRecruiterAllApplications({ limit: 1 }),
+        ]);
+
+        if (compRes.status === "fulfilled" && compRes.value.data?.success) {
+          setCompany(compRes.value.data.data);
+        }
+        if (jobsRes.status === "fulfilled" && jobsRes.value.data?.success) {
+          setActiveJobsCount(jobsRes.value.data.data?.total || 0);
+        }
+        if (appsRes.status === "fulfilled" && appsRes.value.data?.success) {
+          setApplicationsCount(appsRes.value.data.data?.total || 0);
         }
       } catch (err) {
         console.error("Failed to load company profile:", err);
@@ -64,7 +77,7 @@ const EmployerDashboard = () => {
 
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <Link to="/dashboard/employer/jobs" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIcon}
             style={{ backgroundColor: "var(--primary-50)", color: "var(--primary-600)" }}
@@ -72,12 +85,12 @@ const EmployerDashboard = () => {
             <Briefcase size={22} />
           </div>
           <div>
-            <div className={styles.statValue}>0</div>
+            <div className={styles.statValue}>{activeJobsCount}</div>
             <div className={styles.statLabel}>Active Openings</div>
           </div>
-        </div>
+        </Link>
 
-        <div className={styles.statCard}>
+        <Link to="/dashboard/employer/applications" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIcon}
             style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}
@@ -85,10 +98,10 @@ const EmployerDashboard = () => {
             <Users size={22} />
           </div>
           <div>
-            <div className={styles.statValue}>1</div>
-            <div className={styles.statLabel}>Hiring Admins</div>
+            <div className={styles.statValue}>{applicationsCount}</div>
+            <div className={styles.statLabel}>Candidate Submissions</div>
           </div>
-        </div>
+        </Link>
 
         <div className={styles.statCard}>
           <div
@@ -232,36 +245,26 @@ const EmployerDashboard = () => {
         </div>
       </div>
 
-      {/* Stage 2 Employer Roadmap */}
+      {/* Hiring Operations */}
       <div className={styles.formCard}>
         <div className={styles.cardHeader}>
           <div>
-            <h2 className={styles.cardTitle}>Stage 2 Employer Capabilities</h2>
+            <h2 className={styles.cardTitle}>Hiring Operations</h2>
             <p className={styles.cardSubtitle}>
-              Features coming in Stage 2 to streamline enterprise talent acquisition
+              Streamline enterprise talent acquisition, publish requisitions, and review candidate applications
             </p>
           </div>
-          <span
-            style={{
-              padding: "0.25rem 0.625rem",
-              borderRadius: "var(--radius-full)",
-              backgroundColor: "var(--primary-50)",
-              color: "var(--primary-700)",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-            }}
-          >
-            Stage 2 Roadmap
-          </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-          <div
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
+          <Link
+            to="/jobs/create"
             style={{
               padding: "1.25rem",
               borderRadius: "var(--radius-md)",
               backgroundColor: "var(--slate-50)",
               border: "1px solid var(--border-light)",
+              textDecoration: "none",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
@@ -271,28 +274,72 @@ const EmployerDashboard = () => {
               </h4>
             </div>
             <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
-              Create rich job requisitions with salary ranges, required skill tags, and custom screening questions.
+              Create rich job requisitions with salary ranges, required skill tags, and location requirements.
             </p>
-          </div>
+          </Link>
 
-          <div
+          <Link
+            to="/dashboard/employer/jobs"
             style={{
               padding: "1.25rem",
               borderRadius: "var(--radius-md)",
               backgroundColor: "var(--slate-50)",
               border: "1px solid var(--border-light)",
+              textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <Briefcase size={18} style={{ color: "var(--primary-600)" }} />
+              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
+                Manage Company Jobs
+              </h4>
+            </div>
+            <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
+              Review active, draft, and closed positions, and monitor applicant counts.
+            </p>
+          </Link>
+
+          <Link
+            to="/dashboard/employer/applications"
+            style={{
+              padding: "1.25rem",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--slate-50)",
+              border: "1px solid var(--border-light)",
+              textDecoration: "none",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
               <Users size={18} style={{ color: "var(--primary-600)" }} />
               <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
-                Recruiter Delegation & Teams
+                Candidate Applications
               </h4>
             </div>
             <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
-              Authorize affiliated recruiters to source and screen applicants directly under your brand.
+              Screen candidate submissions, review resumes, and update application stages.
             </p>
-          </div>
+          </Link>
+
+          <Link
+            to="/candidates"
+            style={{
+              padding: "1.25rem",
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--slate-50)",
+              border: "1px solid var(--border-light)",
+              textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <TrendingUp size={18} style={{ color: "var(--primary-600)" }} />
+              <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--slate-900)" }}>
+                Talent Discovery
+              </h4>
+            </div>
+            <p style={{ fontSize: "0.875rem", color: "var(--slate-500)", lineHeight: 1.5 }}>
+              Search verified candidates and invite them to apply directly to your company openings.
+            </p>
+          </Link>
         </div>
       </div>
     </div>

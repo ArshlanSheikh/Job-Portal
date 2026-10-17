@@ -89,8 +89,10 @@ const Landing = () => {
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    // In Stage 1, redirects to register/login prompt or filtered list
-    navigate(`/register?search=${encodeURIComponent(searchTerm)}`);
+    const query = new URLSearchParams();
+    if (searchTerm.trim()) query.set("search", searchTerm.trim());
+    if (locationTerm.trim()) query.set("location", locationTerm.trim());
+    navigate(`/jobs?${query.toString()}`);
   };
 
   return (
@@ -155,7 +157,7 @@ const Landing = () => {
                 key={tag}
                 type="button"
                 className={styles.tagPill}
-                onClick={() => setSearchTerm(tag)}
+                onClick={() => navigate(`/jobs?search=${encodeURIComponent(tag)}`)}
               >
                 {tag}
               </button>

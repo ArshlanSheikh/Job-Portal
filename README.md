@@ -1,20 +1,49 @@
-# TalentForge — Modern Full-Stack Job Portal (Stage 1)
+# TalentForge — Modern Full-Stack Job Portal (Stage 1 & Stage 2)
 
-TalentForge is a full-stack, enterprise-grade job recruitment platform built with **React (Vite)**, **Node.js (Express)**, and **MongoDB (Mongoose)**, following the **Universal AI Agent Development Guidelines**.
+TalentForge is a production-ready, enterprise-grade job recruitment platform built with **React (Vite)**, **Node.js (Express)**, and **MongoDB (Mongoose)**, following the **Universal AI Agent Development Guidelines**.
 
 ---
 
-## 🚀 Stage 1 Implementation Overview
+## 🚀 Overview of Implemented Stages
 
-Stage 1 establishes the complete foundation, architecture, multi-role authentication, user account hierarchies, and profile management systems:
-
-- **Multi-Role User Authentication**: Support for **Candidate**, **Recruiter**, and **Employer** accounts.
+### Stage 1: Foundation, RBAC Authentication & Profile Management
+- **Multi-Role User Authentication**: Support for **Candidate**, **Recruiter**, and **Employer** accounts with registration and login.
 - **Security & Authorization**: JWT authentication with Access Tokens (short-lived) and Refresh Tokens (7-day rotation), bcryptjs password hashing, HTTP-only cookie support, and backend role-based access control (RBAC).
 - **Candidate Profile Management**: Full professional profile builder supporting education history, work experience, project showcases, skills tagging, resume upload (PDF/DOC/DOCX), summary, preferences, and completion metrics.
-- **Recruiter Profile Management**: Professional identity, job title, department, professional bio, LinkedIn profile, and dynamic association with platform-registered companies or custom agencies.
+- **Recruiter Profile Management**: Professional identity, job title, department, professional bio, LinkedIn profile, and association with platform-registered companies or custom agencies.
 - **Employer Company Management**: Organization branding, logo upload, industry sector, company size, website, headquarters location, company description, and social media handles.
 - **Modern UI/UX**: Premium light theme with subtle neutral backgrounds, curated indigo/blue accents, Lucide React icons, CSS Modules, loading skeletons, and responsive layouts for mobile, tablet, and desktop.
-- **Role-Specific Dashboard Shells**: Tailored workspace navigation shells for Candidates, Recruiters, and Employers with quick actions and Stage 2 feature teasers.
+- **Role-Specific Dashboard Shells**: Tailored workspace navigation shells for Candidates, Recruiters, and Employers.
+
+### Stage 2: Job Management, Search, Applications, Discovery & Invitations
+- **Job Management**:
+  - Full schema support: Job Title, Company, Description, Responsibilities, Required Qualifications, Required Skills, Experience Range (`min`-`max`), Employment Type (`full-time`, `part-time`, `contract`, `internship`), Workplace Type (`onsite`, `remote`, `hybrid`), Salary Range (`min`-`max`, currency, periodicity), Location, Vacancies, Application Deadline, Required Education, and Status (`draft`, `published`, `closed`).
+  - Recruiters and Employers can create, edit, publish, close, and manage their company job postings.
+  - Ownership & RBAC verification ensures only authorized recruiters/employers can modify or close their company openings.
+- **Candidate Job Search & Saved Jobs**:
+  - Full-text and keyword search across title, company, description, and required skills.
+  - Multi-faceted filtering by location, experience range, employment type, salary range, and workplace type.
+  - Sorting options by posting date (newest/oldest) or salary.
+  - Job bookmarking/saving (`/api/v1/saved-jobs`) allowing candidates to track opportunities from search or details pages.
+- **Job Application System**:
+  - Application submission with either profile resume or newly uploaded file (PDF/DOC/DOCX up to 10MB) and optional cover letter.
+  - Compound database index (`candidateId` + `jobId`) prevents duplicate applications.
+  - Candidate application history tracking with interactive timeline view and withdrawal capability.
+  - Recruiter application screening dashboard: view applicants per job, filter by status, inspect candidate resumes, and manage application lifecycle across 8 validated statuses:
+    - `Applied` ➔ `Under Review` ➔ `Shortlisted` ➔ `Interview` ➔ `Offered` ➔ `Hired` ➔ `Rejected` (or `Withdrawn` by candidate).
+    - Strict authorization ensures candidates cannot alter application statuses to recruiter-controlled states.
+- **Recruiter Candidate Discovery**:
+  - Candidate search interface allowing recruiters to find talent by skills, keywords, and location.
+  - Privacy-preserving candidate cards displaying professional headline, experience summary, skills, and education.
+  - Comprehensive candidate profile view modal with resume inspection permissions.
+- **Recruiter Direct Invitations**:
+  - Recruiters can invite suitable candidates directly to apply for active company job openings with personalized notes.
+  - Candidates receive invitations on their dashboard and can **Accept** or **Decline**.
+  - Accepting an invitation smoothly navigates the candidate directly to the job application interface without automatically submitting unintended applications.
+  - Invitations can be cancelled by recruiters prior to response.
+- **In-App Notifications**:
+  - Database-backed notifications for key recruitment events: job application submitted, status transitions, invitations received, and invitation responses.
+  - Unread badge counter, notification dropdown in the navigation bar, and one-click "Mark all as read" handling.
 
 ---
 
@@ -23,11 +52,11 @@ Stage 1 establishes the complete foundation, architecture, multi-role authentica
 | Layer | Technologies |
 |---|---|
 | **Frontend** | React 19, Vite, React Router DOM, Axios, Lucide React |
-| **Styling** | Vanilla CSS Tokens (`index.css`) & CSS Modules (`*.module.css`) |
+| **Styling** | Vanilla CSS Design Tokens (`index.css`) & CSS Modules (`*.module.css`) |
 | **Backend** | Node.js (v24), Express.js (v5), Morgan, Cookie Parser, Multer |
-| **Database** | MongoDB with Mongoose ODM (Indexes, text search, schemas) |
+| **Database** | MongoDB with Mongoose ODM (Compound indexes, text search indexes, schema validations) |
 | **Authentication** | JSON Web Tokens (`jsonwebtoken`), Bcrypt (`bcryptjs`) |
-| **Code Quality** | Oxlint (0 warnings, 0 errors), Vite Production Bundle (built in <1s) |
+| **Code Quality** | Oxlint (0 errors), Vite Production Bundle (built cleanly in <1s) |
 
 ---
 
@@ -51,35 +80,41 @@ Job-Portal/
 │   │   │       │   └── MainLayout.jsx
 │   │   │       └── Navbar/
 │   │   │           ├── Navbar.jsx
-│   │   │           └── Navbar.module.css
+│   │   │           ├── Navbar.module.css
+│   │   │           ├── NotificationDropdown.jsx
+│   │   │           └── NotificationDropdown.module.css
 │   │   ├── context/
 │   │   │   └── AuthContext.jsx
 │   │   ├── hooks/
 │   │   │   └── useAuth.js
 │   │   ├── pages/
 │   │   │   ├── Auth/
-│   │   │   │   ├── Auth.module.css
 │   │   │   │   ├── Login.jsx
 │   │   │   │   └── Register.jsx
 │   │   │   ├── Candidate/
-│   │   │   │   ├── Candidate.module.css
 │   │   │   │   ├── CandidateDashboard.jsx
-│   │   │   │   └── CandidateProfile.jsx
+│   │   │   │   ├── CandidateProfile.jsx
+│   │   │   │   ├── InvitationsList.jsx
+│   │   │   │   ├── MyApplications.jsx
+│   │   │   │   └── SavedJobs.jsx
 │   │   │   ├── Companies/
 │   │   │   │   └── CompaniesList.jsx
 │   │   │   ├── Employer/
-│   │   │   │   ├── Employer.module.css
 │   │   │   │   ├── EmployerDashboard.jsx
 │   │   │   │   └── EmployerProfile.jsx
+│   │   │   ├── Jobs/
+│   │   │   │   ├── JobDetails.jsx
+│   │   │   │   ├── JobForm.jsx
+│   │   │   │   └── JobsList.jsx
 │   │   │   ├── Landing/
-│   │   │   │   ├── Landing.jsx
-│   │   │   │   └── Landing.module.css
+│   │   │   │   └── Landing.jsx
 │   │   │   ├── Recruiter/
-│   │   │   │   ├── Recruiter.module.css
+│   │   │   │   ├── ApplicationsReview.jsx
+│   │   │   │   ├── CandidateSearch.jsx
+│   │   │   │   ├── ManageJobs.jsx
 │   │   │   │   ├── RecruiterDashboard.jsx
 │   │   │   │   └── RecruiterProfile.jsx
 │   │   │   └── Unauthorized/
-│   │   │       ├── ErrorPage.module.css
 │   │   │       ├── NotFound.jsx
 │   │   │       └── Unauthorized.jsx
 │   │   ├── routes/
@@ -89,8 +124,6 @@ Job-Portal/
 │   │   ├── App.jsx
 │   │   ├── index.css
 │   │   └── main.jsx
-│   ├── .env
-│   ├── .env.example
 │   ├── package.json
 │   └── vite.config.js
 │
@@ -99,6 +132,10 @@ Job-Portal/
 │   │   ├── db.js
 │   │   └── multer.js
 │   ├── modules/
+│   │   ├── applications/
+│   │   │   ├── application.controller.js
+│   │   │   ├── application.model.js
+│   │   │   └── application.routes.js
 │   │   ├── auth/
 │   │   │   ├── auth.controller.js
 │   │   │   ├── auth.middleware.js
@@ -112,20 +149,35 @@ Job-Portal/
 │   │   │   ├── company.controller.js
 │   │   │   ├── company.model.js
 │   │   │   └── company.routes.js
+│   │   ├── invitations/
+│   │   │   ├── invitation.controller.js
+│   │   │   ├── invitation.model.js
+│   │   │   └── invitation.routes.js
+│   │   ├── jobs/
+│   │   │   ├── job.controller.js
+│   │   │   ├── job.model.js
+│   │   │   └── job.routes.js
+│   │   ├── notifications/
+│   │   │   ├── notification.controller.js
+│   │   │   ├── notification.model.js
+│   │   │   └── notification.routes.js
 │   │   ├── recruiters/
 │   │   │   ├── recruiter.controller.js
 │   │   │   ├── recruiter.model.js
 │   │   │   └── recruiter.routes.js
+│   │   ├── savedJobs/
+│   │   │   ├── savedJob.controller.js
+│   │   │   ├── savedJob.model.js
+│   │   │   └── savedJob.routes.js
 │   │   └── index.js
 │   ├── uploads/
 │   │   ├── images/
 │   │   └── resumes/
-│   ├── .env
-│   ├── .env.example
 │   ├── app.js
 │   ├── server.js
 │   ├── package.json
-│   └── test_api_stage1.js
+│   ├── test_api_stage1.js
+│   └── test_api_stage2.js
 │
 ├── .gitignore
 └── README.md
@@ -133,10 +185,9 @@ Job-Portal/
 
 ---
 
-## 📡 Standard API Specification
+## 📡 Complete API Specification
 
-All backend responses conform to the mandatory format:
-
+All endpoints return a uniform JSON envelope:
 ```json
 {
   "success": true,
@@ -146,36 +197,72 @@ All backend responses conform to the mandatory format:
 }
 ```
 
-### Endpoints
+### 1. Authentication (`/api/v1/auth`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `POST` | `/register` | Register user account | Public |
+| `POST` | `/login` | Authenticate and obtain JWT access & refresh tokens | Public |
+| `POST` | `/refresh-token` | Rotate expired access token | Public (valid refresh token) |
+| `POST` | `/logout` | Revoke session and refresh token | Authenticated |
+| `GET` | `/me` | Get active user identity and profile snapshot | Authenticated |
+| `PUT` | `/account` | Update account profile details | Authenticated |
 
-#### Authentication (`/api/v1/auth`)
-- `POST /register`: Register user as `candidate`, `recruiter`, or `employer`.
-- `POST /login`: Authenticate and receive `accessToken` and `refreshToken`.
-- `POST /refresh-token`: Rotate expired access token using refresh token.
-- `POST /logout`: Invalidate session and revoke refresh token.
-- `GET /me`: Retrieve authenticated user account and linked profile.
-- `PUT /account`: Update core account details (name, phone, avatar).
+### 2. Jobs (`/api/v1/jobs`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `GET` | `/` | Browse and filter published jobs with pagination & sorting | Public |
+| `GET` | `/company/my` | View all jobs for authenticated recruiter/employer's company | Recruiter, Employer |
+| `GET` | `/:id` | Get comprehensive details of a single job opening | Public |
+| `POST` | `/` | Create a new job opening | Recruiter, Employer |
+| `PUT` | `/:id` | Update job opening specifications | Recruiter, Employer (Owner) |
+| `PATCH` | `/:id/status` | Change job opening status (`draft`, `published`, `closed`) | Recruiter, Employer (Owner) |
+| `DELETE` | `/:id` | Delete job opening | Recruiter, Employer (Owner) |
 
-#### Candidate Profiles (`/api/v1/candidates`)
-- `GET /me`: Retrieve candidate profile (`candidate` role only).
-- `PUT /me`: Update headline, skills, education, experience, projects, summary, preferences (`candidate` only).
-- `POST /me/resume`: Upload resume file (PDF/DOC/DOCX up to 10MB).
-- `DELETE /me/resume`: Remove uploaded resume.
-- `POST /me/photo`: Upload profile avatar image.
-- `GET /:id`: View candidate profile details (authenticated).
+### 3. Saved Jobs (`/api/v1/saved-jobs`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `GET` | `/` | Retrieve candidate's saved/bookmarked jobs | Candidate |
+| `POST` | `/:jobId` | Save/bookmark a job opening | Candidate |
+| `DELETE` | `/:jobId` | Remove a job from saved list | Candidate |
 
-#### Recruiter Profiles (`/api/v1/recruiters`)
-- `GET /me`: Retrieve recruiter profile (`recruiter` role only).
-- `PUT /me`: Update job title, department, company affiliation, bio, LinkedIn (`recruiter` only).
-- `POST /me/photo`: Upload recruiter photo.
-- `GET /:id`: View recruiter details (authenticated).
+### 4. Applications (`/api/v1/applications`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `POST` | `/` | Apply to a published job with profile resume or new upload | Candidate |
+| `GET` | `/me` | View candidate's application history and status timeline | Candidate |
+| `PATCH` | `/:id/withdraw` | Withdraw active application | Candidate (Applicant) |
+| `GET` | `/job/:jobId` | List all candidate applications for a specific job | Recruiter, Employer (Company) |
+| `GET` | `/recruiter/all` | List all applications across all company jobs | Recruiter, Employer (Company) |
+| `GET` | `/:id` | View specific application record and applicant details | Recruiter, Employer, Candidate |
+| `PATCH` | `/:id/status` | Transition application status (Review, Shortlist, Interview, Offer, Hire, Reject) | Recruiter, Employer (Company) |
 
-#### Employer & Company (`/api/v1/companies`)
-- `GET /my`: Retrieve employer company profile (`employer` role only).
-- `PUT /my`: Update company branding, industry, size, website, location, description (`employer` only).
-- `POST /my/logo`: Upload company logo.
-- `GET /`: List registered companies with search and pagination (public).
-- `GET /:id`: View company profile by ID (public).
+### 5. Candidate Discovery (`/api/v1/candidates`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `GET` | `/search` | Search and filter candidate profiles by skills, keywords, location | Recruiter, Employer |
+| `GET` | `/detail/:id` | View detailed candidate professional profile | Recruiter, Employer |
+| `GET` | `/me` | Get authenticated candidate profile | Candidate |
+| `PUT` | `/me` | Update candidate skills, experience, education, bio | Candidate |
+| `POST` | `/me/resume` | Upload candidate resume | Candidate |
+| `DELETE` | `/me/resume` | Delete candidate resume | Candidate |
+
+### 6. Recruiter Direct Invitations (`/api/v1/invitations`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `POST` | `/` | Send job invitation with personal note to candidate | Recruiter, Employer |
+| `GET` | `/sent` | View list of invitations sent by recruiter's company | Recruiter, Employer |
+| `PATCH` | `/:id/cancel` | Cancel a pending invitation | Recruiter, Employer (Sender) |
+| `GET` | `/me` | Candidate dashboard list of received invitations | Candidate |
+| `PATCH` | `/:id/respond` | Candidate accepts or declines invitation | Candidate (Recipient) |
+
+### 7. In-App Notifications (`/api/v1/notifications`)
+| Method | Endpoint | Description | Access |
+|---|---|---|---|
+| `GET` | `/` | Retrieve paginated notifications for current user | Authenticated |
+| `GET` | `/unread-count` | Retrieve badge counter of unread notifications | Authenticated |
+| `PATCH` | `/:id/read` | Mark individual notification as read | Authenticated |
+| `PATCH` | `/read-all` | Mark all notifications as read | Authenticated |
+| `DELETE` | `/:id` | Delete notification | Authenticated |
 
 ---
 
@@ -200,13 +287,13 @@ VITE_API_URL=http://localhost:5000/api/v1
 
 ---
 
-## 🏃 Getting Started
+## 🏃 Running the Application
 
-### Prerequisites
-- Node.js (v18+)
-- MongoDB running locally on port 27017 or a MongoDB Atlas URI
+### 1. Prerequisites
+- **Node.js**: v18+ (Node v24 recommended)
+- **MongoDB**: Running locally at `mongodb://127.0.0.1:27017/job_portal_db` or MongoDB Atlas URI
 
-### 1. Backend Setup
+### 2. Start Backend Server
 ```bash
 cd backend
 npm install
@@ -214,51 +301,52 @@ npm run dev
 ```
 Backend runs on `http://localhost:5000`.
 
-### 2. Frontend Setup
+### 3. Start Frontend Development Server
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend runs on `http://localhost:5173` with configured API proxy to backend.
+Frontend runs on `http://localhost:5173`.
 
-### 3. Run Automated Tests
+---
+
+## 🧪 Automated Test Verification
+
+TalentForge features automated end-to-end integration test suites for both stages:
+
+### Stage 1 Integration Suite:
 ```bash
 cd backend
 node test_api_stage1.js
 ```
-Runs the 19 integration tests covering registration, login, token refresh, RBAC 403 enforcement, profile CRUD, and logout.
+- **Result**: **19 / 19 PASSED (0 FAILED)**
+- Covers authentication, JWT issuance, token rotation, RBAC 403 enforcement, profile CRUD across Candidate/Recruiter/Employer, company directories, and session invalidation.
 
-### 4. Build and Lint Frontend
+### Stage 2 Integration Suite:
+```bash
+cd backend
+node test_api_stage2.js
+```
+- **Result**: **34 / 34 PASSED (0 FAILED)**
+- Covers:
+  1. Full job creation with schema properties by Recruiter/Employer.
+  2. RBAC protection: Candidates strictly forbidden from creating jobs (403).
+  3. Keyword search, faceted filtering, and single job retrieval.
+  4. Saved jobs lifecycle: save, view list, and unsave.
+  5. Application lifecycle: submission with cover letter, compound index duplicate prevention (400), application history.
+  6. Recruiter screening: view job applicants, status transitions (`applied` ➔ `under_review` ➔ `shortlisted`), candidate RBAC protection.
+  7. Recruiter candidate discovery & authorized profile viewing.
+  8. Recruiter invitation workflow: send invitation, view sent, candidate view received, candidate accept invitation.
+  9. In-app notifications: event creation, unread count query, mark-all-read handling.
+  10. Job status lifecycle: transition to `closed` and back to `published`.
+
+### Overall Test Suite Total:
+**53 / 53 Automated Tests Passing (100% Success Rate)**
+
+### Frontend Verification:
 ```bash
 cd frontend
-npm run lint
-npm run build
+npm run lint    # Oxlint: 0 errors
+npm run build   # Production bundle built in <1s
 ```
-
----
-
-## 🧪 Stage 1 Verification Results
-
-- **Automated Integration Tests**: **19 / 19 PASSED (0 FAILED)**
-  - Input validation & required field checks: PASSED
-  - Multi-role registration & login: PASSED
-  - Token refresh & logout revocation: PASSED
-  - Role-based authorization enforcement (403): PASSED
-  - Candidate, Recruiter, and Employer profile updates: PASSED
-  - Company directory search: PASSED
-- **Frontend Code Quality**:
-  - `npm run lint`: 0 warnings, 0 errors.
-  - `npm run build`: Production bundle generated cleanly in <1s.
-- **Proxy & Connectivity**:
-  - Tested Vite proxy from frontend `http://localhost:5173/api/v1/health` to backend `http://localhost:5000`: Verified HTTP 200 with standard API response.
-
----
-
-## 🔮 Stage 2 Roadmap (Future Scope)
-
-The Stage 1 architecture is indexed and ready for Stage 2 features:
-1. **Job Management**: Job posting creation, editing, closing, and status management for recruiters and employers.
-2. **Advanced Candidate Search**: Filtering candidates by indexed skills, locations, and experience.
-3. **Application Lifecycle**: Candidates applying to jobs with uploaded resumes; recruiters tracking application stages (Review, Shortlist, Interview, Offer, Rejected).
-4. **Notifications & Messaging**: Real-time alerts for application status updates.

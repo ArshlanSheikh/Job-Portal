@@ -9,29 +9,46 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { candidateService } from "../../services/api";
+import {
+  candidateService,
+  applicationService,
+  savedJobService,
+} from "../../services/api";
 import styles from "./Candidate.module.css";
 
 const CandidateDashboard = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
+  const [applicationsCount, setApplicationsCount] = useState(0);
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await candidateService.getMyProfile();
-        if (res.data && res.data.success) {
-          setProfile(res.data.data);
+        const [profRes, appsRes, savedRes] = await Promise.allSettled([
+          candidateService.getMyProfile(),
+          applicationService.getMyApplications({ limit: 1 }),
+          savedJobService.getMySavedJobs({ limit: 1 }),
+        ]);
+
+        if (profRes.status === "fulfilled" && profRes.value.data?.success) {
+          setProfile(profRes.value.data.data);
+        }
+        if (appsRes.status === "fulfilled" && appsRes.value.data?.success) {
+          setApplicationsCount(appsRes.value.data.data?.total || 0);
+        }
+        if (savedRes.status === "fulfilled" && savedRes.value.data?.success) {
+          setSavedJobsCount(savedRes.value.data.data?.total || 0);
         }
       } catch (err) {
-        console.error("Failed to fetch candidate profile:", err);
+        console.error("Failed to fetch candidate dashboard data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchDashboardData();
   }, []);
 
   if (loading) {
@@ -99,7 +116,7 @@ const CandidateDashboard = () => {
 
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
+        <Link to="/applications" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIconWrapper}
             style={{ backgroundColor: "var(--primary-50)", color: "var(--primary-600)" }}
@@ -107,25 +124,12 @@ const CandidateDashboard = () => {
             <Briefcase size={22} />
           </div>
           <div>
-            <div className={styles.statNumber}>0</div>
+            <div className={styles.statNumber}>{applicationsCount}</div>
             <div className={styles.statLabel}>Active Applications</div>
           </div>
-        </div>
+        </Link>
 
-        <div className={styles.statCard}>
-          <div
-            className={styles.statIconWrapper}
-            style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}
-          >
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <div className={styles.statNumber}>14</div>
-            <div className={styles.statLabel}>Recruiter Views</div>
-          </div>
-        </div>
-
-        <div className={styles.statCard}>
+        <Link to="/saved-jobs" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIconWrapper}
             style={{ backgroundColor: "#fef3c7", color: "#d97706" }}
@@ -133,12 +137,25 @@ const CandidateDashboard = () => {
             <Bookmark size={22} />
           </div>
           <div>
-            <div className={styles.statNumber}>3</div>
+            <div className={styles.statNumber}>{savedJobsCount}</div>
             <div className={styles.statLabel}>Saved Jobs</div>
           </div>
-        </div>
+        </Link>
 
-        <div className={styles.statCard}>
+        <Link to="/invitations" style={{ textDecoration: "none" }} className={styles.statCard}>
+          <div
+            className={styles.statIconWrapper}
+            style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}
+          >
+            <TrendingUp size={22} />
+          </div>
+          <div>
+            <div className={styles.statNumber}>View</div>
+            <div className={styles.statLabel}>Direct Invitations</div>
+          </div>
+        </Link>
+
+        <Link to="/profile/candidate" style={{ textDecoration: "none" }} className={styles.statCard}>
           <div
             className={styles.statIconWrapper}
             style={{ backgroundColor: "#ecfdf5", color: "#059669" }}
@@ -151,7 +168,7 @@ const CandidateDashboard = () => {
             </div>
             <div className={styles.statLabel}>Resume Status</div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Profile Summary Card */}

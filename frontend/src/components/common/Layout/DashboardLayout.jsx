@@ -35,7 +35,7 @@ const DashboardLayout = () => {
     if (user.role === "candidate") {
       return (
         <>
-          <div className={styles.navHeading}>Menu</div>
+          <div className={styles.navHeading}>Navigation</div>
           <NavLink
             to="/dashboard/candidate"
             end
@@ -61,22 +61,56 @@ const DashboardLayout = () => {
               <span>Candidate Profile</span>
             </div>
           </NavLink>
+          <NavLink
+            to="/jobs"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <Search size={18} />
+              <span>Explore Jobs</span>
+            </div>
+          </NavLink>
 
-          <div className={styles.navHeading}>Stage 2 Features</div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          <div className={styles.navHeading}>Recruitment Activity</div>
+          <NavLink
+            to="/applications"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
               <Briefcase size={18} />
               <span>My Applications</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          </NavLink>
+          <NavLink
+            to="/saved-jobs"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
               <Bookmark size={18} />
               <span>Saved Openings</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
+          </NavLink>
+          <NavLink
+            to="/invitations"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <Users size={18} />
+              <span>Direct Invitations</span>
+            </div>
+          </NavLink>
         </>
       );
     }
@@ -84,7 +118,7 @@ const DashboardLayout = () => {
     if (user.role === "recruiter") {
       return (
         <>
-          <div className={styles.navHeading}>Menu</div>
+          <div className={styles.navHeading}>Navigation</div>
           <NavLink
             to="/dashboard/recruiter"
             end
@@ -111,21 +145,55 @@ const DashboardLayout = () => {
             </div>
           </NavLink>
 
-          <div className={styles.navHeading}>Stage 2 Features</div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          <div className={styles.navHeading}>Job & Candidate Management</div>
+          <NavLink
+            to="/dashboard/recruiter/jobs"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <Briefcase size={18} />
+              <span>Manage Jobs</span>
+            </div>
+          </NavLink>
+          <NavLink
+            to="/jobs/create"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
               <PlusCircle size={18} />
               <span>Post New Job</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          </NavLink>
+          <NavLink
+            to="/dashboard/recruiter/applications"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <Users size={18} />
+              <span>Review Applicants</span>
+            </div>
+          </NavLink>
+          <NavLink
+            to="/candidates"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
               <Search size={18} />
-              <span>Candidate Search</span>
+              <span>Candidate Discovery</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
+          </NavLink>
         </>
       );
     }
@@ -133,7 +201,7 @@ const DashboardLayout = () => {
     if (user.role === "employer") {
       return (
         <>
-          <div className={styles.navHeading}>Menu</div>
+          <div className={styles.navHeading}>Navigation</div>
           <NavLink
             to="/dashboard/employer"
             end
@@ -156,25 +224,59 @@ const DashboardLayout = () => {
           >
             <div className={styles.navItemContent}>
               <Building size={18} />
-              <span>Company Profile</span>
+              <span>Company Branding</span>
             </div>
           </NavLink>
 
-          <div className={styles.navHeading}>Stage 2 Features</div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          <div className={styles.navHeading}>Requisitions & Staffing</div>
+          <NavLink
+            to="/dashboard/employer/jobs"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <Briefcase size={18} />
+              <span>Company Jobs</span>
+            </div>
+          </NavLink>
+          <NavLink
+            to="/jobs/create"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className={styles.navItemContent}>
+              <PlusCircle size={18} />
+              <span>Post New Opening</span>
+            </div>
+          </NavLink>
+          <NavLink
+            to="/dashboard/employer/applications"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
               <Users size={18} />
-              <span>Team & Recruiters</span>
+              <span>All Applications</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
-          <div className={styles.navItem} style={{ opacity: 0.65 }}>
+          </NavLink>
+          <NavLink
+            to="/candidates"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ""}`
+            }
+            onClick={() => setSidebarOpen(false)}
+          >
             <div className={styles.navItemContent}>
-              <BarChart3 size={18} />
-              <span>Hiring Analytics</span>
+              <Search size={18} />
+              <span>Discover Talent</span>
             </div>
-            <span className={styles.stage2Tag}>Stage 2</span>
-          </div>
+          </NavLink>
         </>
       );
     }
