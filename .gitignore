@@ -1,0 +1,39 @@
+#ProjectDesignDocument
+ProjectDesignDocument/
+
+
+# Node Modules
+node_modules/
+**/node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Uploads
+backend/uploads/images/*
+backend/uploads/resumes/*
+!backend/uploads/images/.gitkeep
+!backend/uploads/resumes/.gitkeep
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

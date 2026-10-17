@@ -1,0 +1,499 @@
+.heroSection {
+  padding: 5rem 0 4rem;
+  background: radial-gradient(circle at 50% 0%, rgba(224, 231, 255, 0.45) 0%, rgba(248, 250, 252, 1) 75%);
+  text-align: center;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 1rem;
+  background-color: var(--primary-50);
+  border: 1px solid var(--primary-200);
+  color: var(--primary-700);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--slate-900);
+  letter-spacing: -0.03em;
+  max-width: 860px;
+  margin: 0 auto 1.5rem;
+}
+
+.heroTitleHighlight {
+  background: linear-gradient(135deg, var(--primary-600), var(--accent-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
+  font-size: 1.15rem;
+  color: var(--slate-600);
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
+}
+
+/* Search Box Container */
+.searchContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  padding: 0.75rem;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border-light);
+}
+
+.searchForm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--slate-50);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.searchField:focus-within {
+  background-color: #ffffff;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.searchFieldIcon {
+  color: var(--slate-400);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  width: 100%;
+  outline: none;
+  font-size: 0.9375rem;
+  color: var(--slate-800);
+}
+
+.searchDivider {
+  width: 1px;
+  height: 2.25rem;
+  background-color: var(--border-light);
+}
+
+.searchBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background-color: var(--primary-600);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.searchBtn:hover {
+  background-color: var(--primary-700);
+  transform: translateY(-1px);
+}
+
+.popularTags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--slate-500);
+}
+
+.tagPill {
+  padding: 0.25rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  color: var(--slate-700);
+  transition: all var(--transition-fast);
+}
+
+.tagPill:hover {
+  border-color: var(--primary-400);
+  color: var(--primary-600);
+}
+
+/* Featured Section */
+.featuredSection {
+  padding: 5rem 0;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sectionHeader {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 3.5rem;
+}
+
+.sectionBadge {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-600);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.sectionTitle {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.sectionSubtitle {
+  font-size: 1rem;
+  color: var(--slate-600);
+}
+
+.jobGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.jobCard {
+  background-color: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.jobCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-card);
+}
+
+.jobCardTop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.companyLogo {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-md);
+  background-color: var(--slate-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--slate-700);
+  font-size: 1.15rem;
+  border: 1px solid var(--border-light);
+}
+
+.jobMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.companyName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--slate-500);
+}
+
+.jobTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-top: 0.125rem;
+}
+
+.jobDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--slate-600);
+}
+
+.jobDetailItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.skillPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.skillBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  background-color: var(--slate-100);
+  color: var(--slate-700);
+  border-radius: var(--radius-sm);
+}
+
+/* Benefits Section */
+.benefitsSection {
+  padding: 5rem 0;
+}
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+}
+
+.benefitCard {
+  background-color: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.benefitIconWrapper {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.benefitIconCandidate {
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.benefitIconEmployer {
+  background-color: var(--accent-50);
+  color: var(--accent-600);
+}
+
+.benefitTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--slate-900);
+}
+
+.benefitList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--slate-600);
+  line-height: 1.5;
+}
+
+.benefitCheck {
+  color: var(--success-600);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* How It Works Section */
+.stepsSection {
+  padding: 5rem 0;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-light);
+}
+
+.stepsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.stepCard {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stepNumber {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--primary-600);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-bottom: 0.75rem;
+}
+
+.stepDesc {
+  font-size: 0.9375rem;
+  color: var(--slate-600);
+  line-height: 1.6;
+}
+
+/* CTA Section */
+.ctaSection {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, var(--slate-900), var(--slate-800));
+  color: #ffffff;
+  text-align: center;
+}
+
+.ctaTitle {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.ctaSubtitle {
+  font-size: 1.125rem;
+  color: var(--slate-300);
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+}
+
+.ctaActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.ctaBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background-color: var(--primary-600);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+  transition: all var(--transition-fast);
+}
+
+.ctaBtnPrimary:hover {
+  background-color: var(--primary-500);
+  transform: translateY(-1px);
+}
+
+.ctaBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-fast);
+}
+
+.ctaBtnSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 900px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .jobGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .benefitsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .stepsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .searchForm {
+    flex-direction: column;
+  }
+
+  .searchDivider {
+    display: none;
+  }
+
+  .searchField {
+    width: 100%;
+  }
+
+  .searchBtn {
+    width: 100%;
+  }
+}
