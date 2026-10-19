@@ -14,7 +14,6 @@ import {
   Search,
   PlusCircle,
   Users,
-  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
 import styles from "./DashboardLayout.module.css";

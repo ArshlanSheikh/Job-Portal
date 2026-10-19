@@ -1,5 +1,12 @@
 import Candidate from "./candidate.model.js";
 import User from "../auth/auth.model.js";
+import Job from "../jobs/job.model.js";
+import Application from "../applications/application.model.js";
+import SavedJob from "../savedJobs/savedJob.model.js";
+import Invitation from "../invitations/invitation.model.js";
+import Notification from "../notifications/notification.model.js";
+import { uploadResumeToCloudinary, deleteResumeFromCloudinary } from "../../config/cloudinary.js";
+
 
 /**
  * Get the authenticated candidate's profile
@@ -173,14 +180,26 @@ const UploadCandidateResume = async (req, res) => {
       candidate = new Candidate({ userId: req.user._id });
     }
 
-    const host = req.get("host");
-    const protocol = req.protocol;
-    const fileUrl = `${protocol}://${host}/uploads/resumes/${req.file.filename}`;
+    // Upload directly to Cloudinary
+    const uploadResult = await uploadResumeToCloudinary(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
+    // If candidate had a previous resume in Cloudinary, delete it
+    if (candidate.resume && candidate.resume.publicId) {
+      deleteResumeFromCloudinary(candidate.resume.publicId, candidate.resume.format).catch((err) =>
+        console.error("Failed to delete previous Cloudinary resume:", err)
+      );
+    }
 
     candidate.resume = {
       fileName: req.file.originalname,
-      fileUrl,
-      fileSize: req.file.size,
+      fileUrl: uploadResult.secure_url || uploadResult.url,
+      fileSize: req.file.size || uploadResult.bytes || 0,
+      publicId: uploadResult.public_id || "",
+      format: uploadResult.format || "",
       uploadedAt: new Date(),
     };
 
@@ -273,10 +292,16 @@ const DeleteCandidateResume = async (req, res) => {
       });
     }
 
+    if (candidate.resume && candidate.resume.publicId) {
+      await deleteResumeFromCloudinary(candidate.resume.publicId, candidate.resume.format);
+    }
+
     candidate.resume = {
       fileName: "",
       fileUrl: "",
       fileSize: 0,
+      publicId: "",
+      format: "",
       uploadedAt: null,
     };
 
@@ -420,6 +445,167 @@ const GetCandidateDetailsForRecruiter = async (req, res) => {
   }
 };
 
+/**
+ * Comprehensive Candidate Dashboard endpoint
+ * Provides profile stats, application breakdown, recommended & recent jobs,
+ * invitations, and notifications in one efficient payload.
+ */
+const GetCandidateDashboard = async (req, res) => {
+  try {
+    console.log("Hit GetCandidateDashboard api...");
+    let candidate = await Candidate.findOne({ userId: req.user._id });
+
+    if (!candidate) {
+      candidate = await Candidate.create({
+        userId: req.user._id,
+        fullName: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone || "",
+      });
+    }
+
+    candidate.calculateCompletion();
+    await candidate.save();
+
+    // 1. Application Counts
+    const [
+      totalApplications,
+      underReviewApplications,
+      shortlistedApplications,
+      interviewApplications,
+      offerApplications,
+      savedJobsCount,
+      invitationsCount,
+      unreadNotificationsCount,
+    ] = await Promise.all([
+      Application.countDocuments({ candidateId: req.user._id }),
+      Application.countDocuments({
+        candidateId: req.user._id,
+        status: { $in: ["Applied", "Under Review"] },
+      }),
+      Application.countDocuments({
+        candidateId: req.user._id,
+        status: "Shortlisted",
+      }),
+      Application.countDocuments({
+        candidateId: req.user._id,
+        status: "Interview",
+      }),
+      Application.countDocuments({
+        candidateId: req.user._id,
+        status: { $in: ["Offered", "Hired"] },
+      }),
+      SavedJob.countDocuments({ candidateId: req.user._id }),
+      Invitation.countDocuments({
+        candidateId: req.user._id,
+        status: "pending",
+      }),
+      Notification.countDocuments({
+        recipientId: req.user._id,
+        isRead: false,
+      }),
+    ]);
+
+    // 2. Recommended Jobs (matched against candidate skills or preferences)
+    let recommendedJobs = [];
+    const skillList = candidate.skills || [];
+    const preferredRoles = candidate.preferredRoles || [];
+
+    const recQuery = { status: "published" };
+    const orConditions = [];
+
+    if (skillList.length > 0) {
+      orConditions.push({ skills: { $in: skillList } });
+    }
+    if (preferredRoles.length > 0) {
+      orConditions.push({ title: { $in: preferredRoles.map((r) => new RegExp(r, "i")) } });
+    }
+    if (candidate.currentLocation) {
+      orConditions.push({ location: new RegExp(candidate.currentLocation, "i") });
+    }
+
+    if (orConditions.length > 0) {
+      recQuery.$or = orConditions;
+      recommendedJobs = await Job.find(recQuery)
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .populate("company", "companyName logo location industry");
+    }
+
+    // If fewer than 4 matched jobs found, supplement with latest published jobs
+    if (recommendedJobs.length < 4) {
+      const existingIds = recommendedJobs.map((j) => j._id);
+      const fillerJobs = await Job.find({
+        status: "published",
+        _id: { $nin: existingIds },
+      })
+        .sort({ createdAt: -1 })
+        .limit(4 - recommendedJobs.length)
+        .populate("company", "companyName logo location industry");
+
+      recommendedJobs = [...recommendedJobs, ...fillerJobs];
+    }
+
+    // 3. Recent Job Openings (Platform-wide)
+    const recentJobs = await Job.find({ status: "published" })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .populate("company", "companyName logo location industry");
+
+    // 4. Candidate's Recent Applications
+    const recentApplications = await Application.find({ candidateId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("jobId", "title location workplaceType employmentType salaryRange status deadline")
+      .populate("companyId", "companyName logo location industry");
+
+    // 5. Recent Invitations
+    const recentInvitations = await Invitation.find({ candidateId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .populate("jobId", "title location workplaceType employmentType salaryRange status")
+      .populate("companyId", "companyName logo location industry")
+      .populate("recruiterId", "name email");
+
+    // 6. Recent In-App Notifications
+    const recentNotifications = await Notification.find({ recipientId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    return res.status(200).json({
+      success: true,
+      message: "Candidate dashboard retrieved successfully",
+      data: {
+        profile: candidate,
+        stats: {
+          totalApplications,
+          underReviewApplications,
+          shortlistedApplications,
+          interviewApplications,
+          offerApplications,
+          savedJobsCount,
+          invitationsCount,
+          unreadNotificationsCount,
+        },
+        recommendedJobs,
+        recentJobs,
+        recentApplications,
+        recentInvitations,
+        recentNotifications,
+      },
+      error: null,
+    });
+  } catch (error) {
+    console.log("failed to handle GetCandidateDashboard", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load candidate dashboard",
+      data: null,
+      error: error.message,
+    });
+  }
+};
+
 export {
   GetMyCandidateProfile,
   GetCandidateById,
@@ -429,4 +615,6 @@ export {
   DeleteCandidateResume,
   SearchCandidates,
   GetCandidateDetailsForRecruiter,
+  GetCandidateDashboard,
 };
+

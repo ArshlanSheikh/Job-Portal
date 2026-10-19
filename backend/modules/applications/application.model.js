@@ -45,6 +45,8 @@ const applicationSchema = new mongoose.Schema(
       fileName: { type: String, required: true },
       fileUrl: { type: String, required: true },
       fileSize: { type: Number, default: 0 },
+      publicId: { type: String, default: "" },
+      format: { type: String, default: "" },
       uploadedAt: { type: Date, default: Date.now },
     },
     coverLetter: {

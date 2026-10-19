@@ -81,6 +81,8 @@ const candidateSchema = new mongoose.Schema(
       fileName: { type: String, default: "" },
       fileUrl: { type: String, default: "" },
       fileSize: { type: Number, default: 0 },
+      publicId: { type: String, default: "" },
+      format: { type: String, default: "" },
       uploadedAt: { type: Date, default: null },
     },
     summary: {

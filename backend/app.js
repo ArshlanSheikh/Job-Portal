@@ -61,16 +61,32 @@ app.use((req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("[Global Error]", err);
-  const status = err.status || 500;
-  const message = err.message || "An unexpected internal server error occurred";
+  console.error("[Global Error]", err.message || err);
+  let status = err.status || 500;
+  let message = err.message || "An unexpected internal server error occurred";
+  let errorKey = "INTERNAL_SERVER_ERROR";
+
+  if (err.name === "MulterError") {
+    status = 400;
+    if (err.code === "LIMIT_FILE_SIZE") {
+      message = "Resume file size exceeds the 10MB limit";
+    } else {
+      message = `File upload error: ${err.message}`;
+    }
+    errorKey = err.code;
+  } else if (err.code === "INVALID_FILE_TYPE") {
+    status = 400;
+    errorKey = "INVALID_FILE_TYPE";
+  }
 
   res.status(status).json({
     success: false,
     message,
     data: null,
-    error: process.env.NODE_ENV === "development" ? err.stack : "INTERNAL_SERVER_ERROR",
+    error: status < 500 ? errorKey : (process.env.NODE_ENV === "development" ? (err.stack || errorKey) : errorKey),
   });
 });
+
+
 
 export default app;

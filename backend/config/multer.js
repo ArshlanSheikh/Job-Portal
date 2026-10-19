@@ -29,16 +29,8 @@ const imageStorage = multer.diskStorage({
   },
 });
 
-const resumeStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, resumesDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `resume-${uniqueSuffix}${ext}`);
-  },
-});
+// Resume memory storage (resumes are held in memory buffer and sent directly to Cloudinary)
+const resumeStorage = multer.memoryStorage();
 
 // Image filter
 const imageFilter = (req, file, cb) => {
@@ -46,21 +38,29 @@ const imageFilter = (req, file, cb) => {
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Only JPG, PNG, and WebP image formats are allowed"), false);
+    const err = new Error("Only JPG, PNG, and WebP image formats are allowed");
+    err.code = "INVALID_FILE_TYPE";
+    cb(err, false);
   }
 };
 
-// Resume filter
+// Resume filter: Supports PDF, DOC, DOCX
 const resumeFilter = (req, file, cb) => {
   const allowedMimeTypes = [
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/octet-stream", // Sometimes sent for docx files
   ];
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const allowedExts = [".pdf", ".doc", ".docx"];
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedMimeTypes.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error("Only PDF, DOC, and DOCX resume formats are allowed"), false);
+    const err = new Error("Only PDF, DOC, and DOCX resume formats are allowed");
+    err.code = "INVALID_FILE_TYPE";
+    cb(err, false);
   }
 };
 
@@ -75,3 +75,4 @@ export const uploadResume = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: resumeFilter,
 });
+

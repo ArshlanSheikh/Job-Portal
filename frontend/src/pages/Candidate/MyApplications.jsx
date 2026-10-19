@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building,
   History,
+  ArrowRight,
 } from "lucide-react";
 import { applicationService } from "../../services/api";
 import styles from "./MyApplications.module.css";

@@ -102,3 +102,45 @@ export const Authorization = (allowedRoles = []) => {
     next();
   };
 };
+
+// In-memory rate limiting map
+const requestCounts = new Map();
+
+/**
+ * Lightweight in-memory rate limiter for sensitive endpoints
+ */
+export const RateLimiter = ({
+  windowMs = 15 * 60 * 1000,
+  max = 100,
+  message = "Too many requests. Please try again later.",
+} = {}) => {
+  return (req, res, next) => {
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "ip_default";
+    const now = Date.now();
+    const entry = requestCounts.get(ip) || { count: 0, resetAt: now + windowMs };
+
+    if (now > entry.resetAt) {
+      entry.count = 1;
+      entry.resetAt = now + windowMs;
+    } else {
+      entry.count += 1;
+    }
+
+    requestCounts.set(ip, entry);
+
+    if (entry.count > max) {
+      return res.status(429).json({
+        success: false,
+        message,
+        data: null,
+        error: "RATE_LIMIT_EXCEEDED",
+      });
+    }
+
+    next();
+  };
+};

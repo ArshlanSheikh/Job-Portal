@@ -89,6 +89,7 @@ export const authService = {
 
 // Candidate Service
 export const candidateService = {
+  getDashboardData: () => api.get("/candidates/dashboard"),
   getMyProfile: () => api.get("/candidates/me"),
   updateMyProfile: (data) => api.put("/candidates/me", data),
   uploadResume: (formData) =>
@@ -107,6 +108,7 @@ export const candidateService = {
 
 // Recruiter Service
 export const recruiterService = {
+  getDashboardData: () => api.get("/recruiters/dashboard"),
   getMyProfile: () => api.get("/recruiters/me"),
   updateMyProfile: (data) => api.put("/recruiters/me", data),
   uploadPhoto: (formData) =>
@@ -118,6 +120,7 @@ export const recruiterService = {
 
 // Company Service
 export const companyService = {
+  getDashboardData: () => api.get("/companies/dashboard"),
   getMyCompany: () => api.get("/companies/my"),
   updateMyCompany: (data) => api.put("/companies/my", data),
   uploadLogo: (formData) =>
@@ -126,6 +129,8 @@ export const companyService = {
     }),
   getAllCompanies: (params) => api.get("/companies", { params }),
   getCompanyById: (id) => api.get(`/companies/${id}`),
+  getCompanyRecruiters: () => api.get("/companies/my/recruiters"),
+  removeCompanyRecruiter: (recruiterId) => api.delete(`/companies/my/recruiters/${recruiterId}`),
 };
 
 // Job Service

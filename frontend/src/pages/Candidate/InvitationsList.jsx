@@ -4,7 +4,6 @@ import {
   Mail,
   Building,
   Check,
-  X,
   ArrowRight,
 } from "lucide-react";
 import { invitationService } from "../../services/api";
@@ -33,6 +32,9 @@ const InvitationsList = () => {
   }, []);
 
   const handleRespond = async (invitationId, action) => {
+    if (action === "decline" && !window.confirm("Are you sure you want to decline this interview/application invitation?")) {
+      return;
+    }
     try {
       await invitationService.respondToInvitation(invitationId, action);
       setInvitations((prev) =>

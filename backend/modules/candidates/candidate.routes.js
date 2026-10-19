@@ -8,11 +8,15 @@ import {
   DeleteCandidateResume,
   SearchCandidates,
   GetCandidateDetailsForRecruiter,
+  GetCandidateDashboard,
 } from "./candidate.controller.js";
 import { Authentication, Authorization } from "../auth/auth.middleware.js";
 import { uploadResume, uploadImage } from "../../config/multer.js";
 
 const router = express.Router();
+
+// Candidate dashboard route
+router.get("/dashboard", Authentication, Authorization(["candidate"]), GetCandidateDashboard);
 
 // Candidate private profile routes
 router.get("/me", Authentication, Authorization(["candidate"]), GetMyCandidateProfile);

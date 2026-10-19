@@ -4,6 +4,8 @@ import Candidate from "../candidates/candidate.model.js";
 import Company from "../companies/company.model.js";
 import Recruiter from "../recruiters/recruiter.model.js";
 import Notification from "../notifications/notification.model.js";
+import { uploadResumeToCloudinary } from "../../config/cloudinary.js";
+
 
 // Helper to determine the company associated with the user
 const resolveUserCompany = async (user) => {
@@ -85,23 +87,45 @@ const ApplyToJob = async (req, res) => {
     let resumeData = null;
 
     if (req.file) {
-      const host = req.get("host");
-      const protocol = req.protocol;
+      // Upload directly to Cloudinary (no local disk storage)
+      const uploadResult = await uploadResumeToCloudinary(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
       resumeData = {
         fileName: req.file.originalname,
-        fileUrl: `${protocol}://${host}/uploads/resumes/${req.file.filename}`,
-        fileSize: req.file.size,
+        fileUrl: uploadResult.secure_url || uploadResult.url,
+        fileSize: req.file.size || uploadResult.bytes || 0,
+        publicId: uploadResult.public_id || "",
+        format: uploadResult.format || "",
         uploadedAt: new Date(),
       };
+
+      // Also update candidate profile if candidate profile does not have a resume yet
+      const candidateProfile = await Candidate.findOne({ userId: req.user._id });
+      if (candidateProfile && (!candidateProfile.resume || !candidateProfile.resume.fileUrl)) {
+        candidateProfile.resume = resumeData;
+        candidateProfile.calculateCompletion();
+        await candidateProfile.save();
+      }
     } else {
-      // Use profile resume
+      // Use candidate profile resume
       const candidateProfile = await Candidate.findOne({ userId: req.user._id });
       if (
         candidateProfile &&
         candidateProfile.resume &&
         candidateProfile.resume.fileUrl
       ) {
-        resumeData = candidateProfile.resume;
+        resumeData = {
+          fileName: candidateProfile.resume.fileName,
+          fileUrl: candidateProfile.resume.fileUrl,
+          fileSize: candidateProfile.resume.fileSize || 0,
+          publicId: candidateProfile.resume.publicId || "",
+          format: candidateProfile.resume.format || "",
+          uploadedAt: candidateProfile.resume.uploadedAt || new Date(),
+        };
       }
     }
 

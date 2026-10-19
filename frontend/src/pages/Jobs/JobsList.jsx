@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -11,20 +11,42 @@ import {
   Building,
   ArrowRight,
   Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Upload,
+  FileText,
 } from "lucide-react";
-import { jobService, savedJobService } from "../../services/api";
+import {
+  jobService,
+  savedJobService,
+  applicationService,
+  candidateService,
+} from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 import styles from "./JobsList.module.css";
 
 const JobsList = () => {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedJobIds, setSavedJobIds] = useState(new Set());
+  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [candidateProfile, setCandidateProfile] = useState(null);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Apply Modal state for quick card application
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [selectedJobForApply, setSelectedJobForApply] = useState(null);
+  const [useProfileResume, setUseProfileResume] = useState(true);
+  const [uploadedResumeFile, setUploadedResumeFile] = useState(null);
+  const [coverLetter, setCoverLetter] = useState("");
+  const [submittingApply, setSubmittingApply] = useState(false);
+  const [applyError, setApplyError] = useState("");
+  const [applySuccess, setApplySuccess] = useState("");
 
   // Search and Filter states initialized from URL query params
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -41,7 +63,7 @@ const JobsList = () => {
   const [sort, setSort] = useState(searchParams.get("sort") || "newest");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
 
-  // Fetch saved jobs for logged in candidates
+  // Fetch saved jobs and applications for logged in candidates
   useEffect(() => {
     if (isAuthenticated && user?.role === "candidate") {
       savedJobService
@@ -55,8 +77,35 @@ const JobsList = () => {
           }
         })
         .catch(() => {});
+
+      applicationService
+        .getMyApplications({ limit: 100 })
+        .then((res) => {
+          if (res.data?.success && res.data.data?.applications) {
+            const ids = new Set(
+              res.data.data.applications
+                .map((app) => app.jobId?._id || app.jobId)
+                .filter(Boolean)
+            );
+            setAppliedJobIds(ids);
+          }
+        })
+        .catch(() => {});
+
+      candidateService
+        .getMyProfile()
+        .then((res) => {
+          if (res.data?.success && res.data.data) {
+            setCandidateProfile(res.data.data);
+            if (!res.data.data.resume?.fileUrl) {
+              setUseProfileResume(false);
+            }
+          }
+        })
+        .catch(() => {});
     }
   }, [isAuthenticated, user]);
+
 
   // Fetch Jobs
   const fetchJobs = useCallback(async () => {
@@ -168,6 +217,107 @@ const JobsList = () => {
       }
     } catch (err) {
       console.error("Failed to toggle save job:", err);
+    }
+  };
+
+  const handleCardApplyClick = (job) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    if (user?.role !== "candidate") {
+      alert("Only candidates can apply to job openings.");
+      return;
+    }
+    setSelectedJobForApply(job);
+    setApplyError("");
+    setApplySuccess("");
+    setUploadedResumeFile(null);
+    setCoverLetter("");
+    if (!candidateProfile?.resume?.fileUrl) {
+      setUseProfileResume(false);
+    } else {
+      setUseProfileResume(true);
+    }
+    setApplyModalOpen(true);
+  };
+
+  const handleApplyFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const allowedMimes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream",
+      ];
+      const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+      const allowedExts = [".pdf", ".doc", ".docx"];
+
+      if (!allowedMimes.includes(file.type) && !allowedExts.includes(ext)) {
+        setApplyError("Please select a PDF or Word document (.pdf, .doc, .docx)");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setApplyError("Resume file size must not exceed 10MB");
+        return;
+      }
+      setApplyError("");
+      setUploadedResumeFile(file);
+    }
+  };
+
+  const handleModalApplySubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedJobForApply) return;
+    setApplyError("");
+
+    if (!useProfileResume && !uploadedResumeFile) {
+      setApplyError("Please select a resume file to submit with your application.");
+      return;
+    }
+
+    if (useProfileResume && !candidateProfile?.resume?.fileUrl) {
+      setApplyError("Your profile does not have a saved resume yet. Please upload a file.");
+      return;
+    }
+
+    try {
+      setSubmittingApply(true);
+      if (uploadedResumeFile) {
+        const formData = new FormData();
+        formData.append("jobId", selectedJobForApply._id);
+        formData.append("coverLetter", coverLetter ? coverLetter.trim() : "");
+        formData.append("resume", uploadedResumeFile);
+        formData.append("useProfileResume", "false");
+        await applicationService.applyToJob(formData);
+      } else {
+        await applicationService.applyToJob({
+          jobId: selectedJobForApply._id,
+          coverLetter: coverLetter ? coverLetter.trim() : "",
+          useProfileResume: true,
+        });
+      }
+
+      setAppliedJobIds((prev) => new Set(prev).add(selectedJobForApply._id));
+      setApplySuccess("Application submitted successfully!");
+
+      candidateService.getMyProfile().then((res) => {
+        if (res.data?.success && res.data.data) {
+          setCandidateProfile(res.data.data);
+        }
+      }).catch(() => {});
+
+      setTimeout(() => {
+        setApplyModalOpen(false);
+        setSelectedJobForApply(null);
+        setApplySuccess("");
+      }, 1500);
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to submit application. Please try again.";
+      setApplyError(msg);
+    } finally {
+      setSubmittingApply(false);
     }
   };
 
@@ -542,7 +692,7 @@ const JobsList = () => {
                     )}
 
                     <div className={styles.jobCardFooter}>
-                      <div>
+                      <div className={styles.postedDate}>
                         Posted {new Date(job.createdAt).toLocaleDateString()}
                         {job.deadline && (
                           <span>
@@ -552,10 +702,50 @@ const JobsList = () => {
                         )}
                       </div>
 
-                      <Link to={`/jobs/${job._id}`} className={styles.applyLink}>
-                        <span>View Details</span>
-                        <ArrowRight size={15} />
-                      </Link>
+                      <div className={styles.cardActions}>
+                        <Link to={`/jobs/${job._id}`} className={styles.detailsBtn}>
+                          <span>View Details</span>
+                        </Link>
+
+                        {appliedJobIds.has(job._id) ? (
+                          <button
+                            type="button"
+                            disabled
+                            className={styles.appliedCardBtn}
+                            title="You have already applied for this opening"
+                            aria-label="Already applied"
+                          >
+                            <CheckCircle2 size={15} />
+                            <span>Applied</span>
+                          </button>
+                        ) : submittingApply && selectedJobForApply?._id === job._id ? (
+                          <button
+                            type="button"
+                            disabled
+                            className={styles.applyCardBtn}
+                          >
+                            <span className={styles.buttonSpinner} />
+                            <span>Applying...</span>
+                          </button>
+                        ) : job.status === "closed" ? (
+                          <button
+                            type="button"
+                            disabled
+                            className={styles.closedCardBtn}
+                          >
+                            <span>Closed</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.applyCardBtn}
+                            onClick={() => handleCardApplyClick(job)}
+                          >
+                            <span>Apply Now</span>
+                            <ArrowRight size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </article>
                 );
@@ -600,8 +790,174 @@ const JobsList = () => {
           )}
         </main>
       </div>
+
+      {/* Interactive Apply Modal from Job Card */}
+      {applyModalOpen && selectedJobForApply && (
+        <div className={styles.modalOverlay} onClick={() => setApplyModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h2 className={styles.modalTitle}>Apply to {selectedJobForApply.title}</h2>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.2rem" }}>
+                  {selectedJobForApply.company?.companyName || "Organization"} • {selectedJobForApply.location || "Remote"}
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setApplyModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleModalApplySubmit}>
+              <div className={styles.modalBody}>
+                {applyError && (
+                  <div className={styles.alertError}>
+                    <AlertCircle size={18} />
+                    <span>{applyError}</span>
+                  </div>
+                )}
+
+                {applySuccess && (
+                  <div className={styles.alertSuccess}>
+                    <CheckCircle2 size={18} />
+                    <span>{applySuccess}</span>
+                  </div>
+                )}
+
+                {/* Resume Selection */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>Resume Selection *</label>
+                  <div className={styles.radioChoiceGroup}>
+                    {candidateProfile?.resume?.fileName && (
+                      <label
+                        className={`${styles.radioCard} ${
+                          useProfileResume ? styles.radioCardActive : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="resumeSourceCard"
+                          checked={useProfileResume}
+                          onChange={() => setUseProfileResume(true)}
+                        />
+                        <div>
+                          <strong>Use Profile Resume</strong>
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              color: "var(--text-secondary)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.35rem",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            <FileText size={14} />
+                            <span>{candidateProfile.resume.fileName}</span>
+                          </div>
+                        </div>
+                      </label>
+                    )}
+
+                    <label
+                      className={`${styles.radioCard} ${
+                        !useProfileResume ? styles.radioCardActive : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="resumeSourceCard"
+                        checked={!useProfileResume}
+                        onChange={() => setUseProfileResume(false)}
+                      />
+                      <div>
+                        <strong>Upload New Resume File</strong>
+                        <div
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "var(--text-secondary)",
+                            marginTop: "0.25rem",
+                          }}
+                        >
+                          Upload PDF, DOC, or DOCX (Max 10MB)
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {!useProfileResume && (
+                    <div style={{ marginTop: "0.75rem" }}>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleApplyFileChange}
+                        style={{ display: "none" }}
+                        id="cardResumeUploadInput"
+                      />
+                      <label htmlFor="cardResumeUploadInput" className={styles.fileDropzone}>
+                        <Upload size={24} style={{ color: "var(--primary-color)", margin: "0 auto 0.5rem" }} />
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                          {uploadedResumeFile
+                            ? uploadedResumeFile.name
+                            : "Click to browse and upload resume"}
+                        </div>
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                          PDF, DOC, DOCX up to 10MB
+                        </div>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Optional Cover Letter */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>
+                    Cover Letter / Personal Note (Optional)
+                  </label>
+                  <textarea
+                    className={styles.textarea}
+                    placeholder="Introduce yourself and explain why your experience makes you an ideal fit for this requisition..."
+                    value={coverLetter}
+                    onChange={(e) => setCoverLetter(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  className={styles.cancelBtn}
+                  onClick={() => setApplyModalOpen(false)}
+                  disabled={submittingApply}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  id="submitCardApplicationBtn"
+                  className={styles.submitBtn}
+                  disabled={submittingApply}
+                >
+                  {submittingApply ? (
+                    <>
+                      <span className={styles.buttonSpinner} />
+                      <span>Applying...</span>
+                    </>
+                  ) : (
+                    <span>Submit Application</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default JobsList;
+

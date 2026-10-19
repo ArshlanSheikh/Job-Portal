@@ -26,24 +26,32 @@
 }
 
 .createBtn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
+  background: var(--primary-color, #2563eb);
+  color: #ffffff;
+  border: 1px solid var(--primary-color, #2563eb);
+  border-radius: var(--radius-md, 8px);
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
   transition: all 0.2s ease;
 }
 
 .createBtn:hover {
-  background: var(--primary-hover);
+  background: var(--primary-hover, #1d4ed8);
+  border-color: var(--primary-hover, #1d4ed8);
+  color: #ffffff;
   transform: translateY(-1px);
+}
+
+.createBtn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.4);
+  outline-offset: 2px;
 }
 
 /* Filter Tabs */

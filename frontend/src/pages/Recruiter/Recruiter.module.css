@@ -162,3 +162,110 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Recruiter Dashboard Layout */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.75rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboardColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.pipelineGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .pipelineGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pipelineCard {
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  background-color: var(--slate-50);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: all var(--transition-fast);
+}
+
+.pipelineCard:hover {
+  background-color: #ffffff;
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-xs);
+}
+
+.pipelineCount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--slate-900);
+}
+
+.pipelineLabel {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--slate-500);
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.miniTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.miniTable th {
+  background-color: var(--slate-50);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--slate-600);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.miniTable td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--slate-800);
+}
+
+.miniTable tr:last-child td {
+  border-bottom: none;
+}
+
+.miniTable tr:hover td {
+  background-color: var(--slate-50);
+}
+
+.appItemCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--slate-50);
+  border: 1px solid var(--border-light);
+  gap: 0.75rem;
+}

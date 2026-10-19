@@ -5,6 +5,7 @@ import {
   Trash2,
   MapPin,
   Briefcase,
+  ArrowRight,
 } from "lucide-react";
 import { savedJobService } from "../../services/api";
 import styles from "./SavedJobs.module.css";
@@ -32,6 +33,9 @@ const SavedJobs = () => {
   }, []);
 
   const handleUnsave = async (jobId) => {
+    if (!window.confirm("Are you sure you want to remove this job from your saved list?")) {
+      return;
+    }
     try {
       await savedJobService.unsaveJob(jobId);
       setSavedItems((prev) => prev.filter((item) => item.jobId?._id !== jobId));

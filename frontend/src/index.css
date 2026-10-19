@@ -76,6 +76,25 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Jobs & Portal Compatibility Tokens (fixes undefined variable root cause) */
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-light: #eff6ff;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --bg-secondary: #f8fafc;
+
+  /* App.css compatibility aliases */
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --accent-border: #bfdbfe;
+  --border: #e2e8f0;
+  --text-h: #0f172a;
+  --social-bg: #f1f5f9;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
 *,
@@ -118,6 +137,7 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  color: inherit;
 }
 
 input,

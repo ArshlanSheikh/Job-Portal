@@ -14,6 +14,16 @@ const STATUS_OPTIONS = [
   "Rejected",
 ];
 
+const resolveResumeUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  const base = (import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1").replace("/api/v1", "");
+  return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
+
 const ApplicationsReview = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialJobId = searchParams.get("jobId") || "all";
@@ -279,7 +289,7 @@ const ApplicationsReview = () => {
 
                   {app.resume?.fileUrl && (
                     <a
-                      href={app.resume.fileUrl}
+                      href={resolveResumeUrl(app.resume.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className={styles.resumeDownloadBtn}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -11,6 +11,7 @@ import {
   Users,
   Compass,
 } from "lucide-react";
+import { jobService } from "../../services/api";
 import styles from "./Landing.module.css";
 
 const SAMPLE_FEATURED_JOBS = [
@@ -86,6 +87,18 @@ const Landing = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
+  const [liveJobs, setLiveJobs] = useState([]);
+
+  useEffect(() => {
+    jobService
+      .getAllJobs({ limit: 6, status: "published" })
+      .then((res) => {
+        if (res.data?.success && res.data.data?.jobs?.length > 0) {
+          setLiveJobs(res.data.data.jobs);
+        }
+      })
+      .catch((err) => console.error("Failed to load featured jobs:", err));
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -178,40 +191,109 @@ const Landing = () => {
           </div>
 
           <div className={styles.jobGrid}>
-            {SAMPLE_FEATURED_JOBS.map((job) => (
-              <div key={job.id} className={styles.jobCard}>
-                <div className={styles.jobCardTop}>
-                  <div className={styles.companyLogo}>{job.logoText}</div>
-                  <div className={styles.jobMeta}>
-                    <span className={styles.companyName}>{job.company}</span>
-                    <h3 className={styles.jobTitle}>{job.title}</h3>
+            {liveJobs.length > 0
+              ? liveJobs.map((job) => {
+                  const company = job.company;
+                  return (
+                    <div
+                      key={job._id}
+                      className={styles.jobCard}
+                      onClick={() => navigate(`/jobs/${job._id}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className={styles.jobCardTop}>
+                        <div className={styles.companyLogo}>
+                          {company?.logo ? (
+                            <img
+                              src={company.logo}
+                              alt={company.companyName}
+                              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                            />
+                          ) : (
+                            company?.companyName?.charAt(0).toUpperCase() || "C"
+                          )}
+                        </div>
+                        <div className={styles.jobMeta}>
+                          <span className={styles.companyName}>
+                            {company?.companyName || "Organization"}
+                          </span>
+                          <h3 className={styles.jobTitle}>{job.title}</h3>
+                        </div>
+                      </div>
+
+                      <div className={styles.jobDetails}>
+                        <span className={styles.jobDetailItem}>
+                          <MapPin size={15} />
+                          {job.location || "Remote"}
+                        </span>
+                        {job.salaryRange && (job.salaryRange.min > 0 || job.salaryRange.max > 0) ? (
+                          <span className={styles.jobDetailItem}>
+                            <DollarSign size={15} />
+                            ${job.salaryRange.min?.toLocaleString()} - ${job.salaryRange.max?.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className={styles.jobDetailItem}>
+                            <DollarSign size={15} />
+                            Competitive
+                          </span>
+                        )}
+                        <span className={styles.jobDetailItem} style={{ textTransform: "capitalize" }}>
+                          <Briefcase size={15} />
+                          {job.workplaceType || "Onsite"}
+                        </span>
+                      </div>
+
+                      {job.skills && job.skills.length > 0 && (
+                        <div className={styles.skillPills}>
+                          {job.skills.slice(0, 4).map((skill, idx) => (
+                            <span key={idx} className={styles.skillBadge}>
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              : SAMPLE_FEATURED_JOBS.map((job) => (
+                  <div
+                    key={job.id}
+                    className={styles.jobCard}
+                    onClick={() => navigate(`/jobs?search=${encodeURIComponent(job.title)}`)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className={styles.jobCardTop}>
+                      <div className={styles.companyLogo}>{job.logoText}</div>
+                      <div className={styles.jobMeta}>
+                        <span className={styles.companyName}>{job.company}</span>
+                        <h3 className={styles.jobTitle}>{job.title}</h3>
+                      </div>
+                    </div>
+
+                    <div className={styles.jobDetails}>
+                      <span className={styles.jobDetailItem}>
+                        <MapPin size={15} />
+                        {job.location}
+                      </span>
+                      <span className={styles.jobDetailItem}>
+                        <DollarSign size={15} />
+                        {job.salary}
+                      </span>
+                      <span className={styles.jobDetailItem}>
+                        <Briefcase size={15} />
+                        {job.type}
+                      </span>
+                    </div>
+
+                    <div className={styles.skillPills}>
+                      {job.skills.map((skill) => (
+                        <span key={skill} className={styles.skillBadge}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                <div className={styles.jobDetails}>
-                  <span className={styles.jobDetailItem}>
-                    <MapPin size={15} />
-                    {job.location}
-                  </span>
-                  <span className={styles.jobDetailItem}>
-                    <DollarSign size={15} />
-                    {job.salary}
-                  </span>
-                  <span className={styles.jobDetailItem}>
-                    <Briefcase size={15} />
-                    {job.type}
-                  </span>
-                </div>
-
-                <div className={styles.skillPills}>
-                  {job.skills.map((skill) => (
-                    <span key={skill} className={styles.skillBadge}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+                ))}
           </div>
         </div>
       </section>

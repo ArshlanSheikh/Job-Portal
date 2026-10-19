@@ -13,8 +13,18 @@ import { useAuth } from "../../hooks/useAuth";
 import { candidateService } from "../../services/api";
 import styles from "./Candidate.module.css";
 
+const resolveResumeUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  const base = (import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1").replace("/api/v1", "");
+  return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const CandidateProfile = () => {
   const { user, updateUserState } = useAuth();
+
 
   // Basic info states
   const [fullName, setFullName] = useState("");
@@ -273,6 +283,27 @@ const CandidateProfile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const allowedMimes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/octet-stream",
+    ];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    const allowedExts = [".pdf", ".doc", ".docx"];
+
+    if (!allowedMimes.includes(file.type) && !allowedExts.includes(ext)) {
+      setErrorMessage("Please select a PDF or Word document (.pdf, .doc, .docx)");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("Resume file size must not exceed 10MB");
+      e.target.value = "";
+      return;
+    }
+
     try {
       setUploadingResume(true);
       const formData = new FormData();
@@ -296,6 +327,9 @@ const CandidateProfile = () => {
   };
 
   const handleDeleteResume = async () => {
+    if (!window.confirm("Are you sure you want to delete your stored resume? You will need to upload a new file when applying to jobs.")) {
+      return;
+    }
     try {
       setUploadingResume(true);
       const res = await candidateService.deleteResume();
@@ -670,7 +704,7 @@ const CandidateProfile = () => {
 
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <a
-                href={resume.fileUrl}
+                href={resolveResumeUrl(resume.fileUrl)}
                 target="_blank"
                 rel="noreferrer"
                 style={{

@@ -139,13 +139,21 @@ const JobDetails = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
-      if (!allowed.includes(file.type)) {
-        setApplyError("Please upload a PDF or Word document (.pdf, .doc, .docx)");
+      const allowedMimes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream",
+      ];
+      const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+      const allowedExts = [".pdf", ".doc", ".docx"];
+
+      if (!allowedMimes.includes(file.type) && !allowedExts.includes(ext)) {
+        setApplyError("Please select a PDF or Word document (.pdf, .doc, .docx)");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setApplyError("Resume file size must not exceed 5MB");
+      if (file.size > 10 * 1024 * 1024) {
+        setApplyError("Resume file size must not exceed 10MB");
         return;
       }
       setApplyError("");
@@ -173,21 +181,27 @@ const JobDetails = () => {
       if (uploadedResumeFile) {
         const formData = new FormData();
         formData.append("jobId", id);
-        formData.append("coverLetter", coverLetter);
+        formData.append("coverLetter", coverLetter ? coverLetter.trim() : "");
         formData.append("resume", uploadedResumeFile);
         formData.append("useProfileResume", "false");
         await applicationService.applyToJob(formData);
       } else {
         await applicationService.applyToJob({
           jobId: id,
-          coverLetter,
+          coverLetter: coverLetter ? coverLetter.trim() : "",
           useProfileResume: true,
         });
       }
 
       setHasApplied(true);
       setApplyModalOpen(false);
-      alert("Application submitted successfully! You can track its status in your dashboard.");
+
+      // Refresh candidate profile to reflect any newly uploaded resume
+      candidateService.getMyProfile().then((res) => {
+        if (res.data?.success && res.data.data) {
+          setCandidateProfile(res.data.data);
+        }
+      }).catch(() => {});
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to submit application. Please try again.";
       setApplyError(msg);
@@ -279,25 +293,50 @@ const JobDetails = () => {
             )}
 
             {hasApplied ? (
-              <div className={styles.appliedBadge}>
+              <button disabled className={styles.appliedButton} aria-label="Already applied to this position">
                 <CheckCircle2 size={18} />
-                <span>Application Submitted</span>
-              </div>
+                <span>Applied</span>
+              </button>
             ) : isClosed ? (
-              <button disabled className={styles.applyPrimaryBtn}>
-                Position Closed
+              <button disabled className={styles.closedButton}>
+                <span>Position Closed</span>
               </button>
             ) : (
               <button
                 type="button"
+                id="applyButton"
                 className={styles.applyPrimaryBtn}
                 onClick={handleApplyClick}
+                disabled={submitting}
               >
-                <span>Apply for Position</span>
+                {submitting ? (
+                  <>
+                    <span className={styles.buttonSpinner} />
+                    <span>Applying...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={18} />
+                    <span>Apply Now</span>
+                  </>
+                )}
               </button>
             )}
           </div>
         </div>
+
+        {hasApplied && (
+          <div className={styles.successBanner}>
+            <CheckCircle2 size={20} />
+            <div>
+              <strong>Application Submitted</strong>
+              <div style={{ fontSize: "0.85rem", marginTop: "0.15rem" }}>
+                You have applied for this role. Your resume and application details are securely submitted to the employer.
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Quick Metrics */}
         <div className={styles.metricsGrid}>
@@ -561,7 +600,7 @@ const JobDetails = () => {
                             marginTop: "0.25rem",
                           }}
                         >
-                          Upload PDF, DOC, or DOCX (Max 5MB)
+                          Upload PDF, DOC, or DOCX (Max 10MB)
                         </div>
                       </div>
                     </label>
@@ -584,7 +623,7 @@ const JobDetails = () => {
                             : "Click to browse and upload resume"}
                         </div>
                         <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
-                          PDF, DOC, DOCX up to 5MB
+                          PDF, DOC, DOCX up to 10MB
                         </div>
                       </label>
                     </div>
@@ -616,10 +655,18 @@ const JobDetails = () => {
                 </button>
                 <button
                   type="submit"
+                  id="submitApplicationBtn"
                   className={styles.submitBtn}
                   disabled={submitting}
                 >
-                  {submitting ? "Submitting..." : "Submit Application"}
+                  {submitting ? (
+                    <>
+                      <span className={styles.buttonSpinner} />
+                      <span>Applying...</span>
+                    </>
+                  ) : (
+                    <span>Submit Application</span>
+                  )}
                 </button>
               </div>
             </form>
