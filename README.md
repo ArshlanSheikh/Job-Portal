@@ -347,6 +347,5 @@ node test_api_stage2.js
 ### Frontend Verification:
 ```bash
 cd frontend
-npm run lint    # Oxlint: 0 errors
 npm run build   # Production bundle built in <1s
 ```
